@@ -6,6 +6,10 @@ namespace PereSkyroom
 	{
 		[Export] public Color DitherDarkColor = new Color(0.035f, 0.045f, 0.075f, 1.0f);
 		[Export] public Color DitherLightColor = new Color(0.95f, 0.82f, 0.36f, 1.0f);
+		// Change this value in code to configure both side-camera yaw offsets.
+		public float SideCameraAngleDegrees = 90.0f;
+		public bool SmoothSideCameraTransitionEnabled = true;
+		public float SideCameraTransitionDurationSeconds = 0.5f;
 
 		private readonly Color _floorColor = new Color(0.16f, 0.19f, 0.26f);
 		private readonly Color _wallColor = new Color(0.10f, 0.13f, 0.20f);
@@ -18,12 +22,14 @@ namespace PereSkyroom
 			BuildPlatforms();
 			BuildTargets();
 			PlayerController player = BuildPlayer();
+			SideCameraMode sideCameraMode = BuildSideCameraMode(player);
 			BlueNoiseDither dither = BuildDitherPostProcess(player);
 
 			foreach (string argument in OS.GetCmdlineArgs())
 			{
 				if (argument == "--smoke-test" || argument == "--no-window")
 				{
+					sideCameraMode.SetEnabled(true);
 					dither.SetEnabled(true);
 					RunSmokeTest();
 					break;
@@ -119,10 +125,23 @@ namespace PereSkyroom
 			return dither;
 		}
 
+		private SideCameraMode BuildSideCameraMode(PlayerController player)
+		{
+			var mode = new SideCameraMode
+			{
+				Name = "SideCameraMode",
+				Player = player,
+				CameraAngleDegrees = SideCameraAngleDegrees,
+				SmoothTransitionEnabled = SmoothSideCameraTransitionEnabled,
+				TransitionDurationSeconds = SideCameraTransitionDurationSeconds
+			};
+			AddChild(mode);
+			return mode;
+		}
+
 		private async void RunSmokeTest()
 		{
-			await ToSignal(GetTree(), "idle_frame");
-			await ToSignal(GetTree(), "idle_frame");
+			await ToSignal(GetTree().CreateTimer(0.6f), "timeout");
 			GD.Print("PERE_DITHER_SMOKE_TEST_OK");
 			GetTree().Quit();
 		}

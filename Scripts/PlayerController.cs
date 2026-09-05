@@ -15,6 +15,7 @@ namespace PereSkyroom
         private Label _modeLabel;
         private Label _scoreLabel;
 		private Label _ditherLabel;
+		private Label _sideCameraLabel;
         private Label _messageLabel;
 		private Label _fpsLabel;
         private Vector3 _velocity = Vector3.Zero;
@@ -157,10 +158,10 @@ namespace PereSkyroom
 
         private void BuildHud()
         {
-            var hud = new CanvasLayer { Name = "HUD" };
+			var hud = new CanvasLayer { Name = "HUD", Layer = 900 };
             AddChild(hud);
 
-            var help = NewLabel("WASD — move   SPACE — jump/up   CTRL — down\nF — flight   B — 2-color blue-noise   F3 — FPS   LMB — shoot   ESC — cursor", 18);
+			var help = NewLabel("WASD — move   SPACE — jump/up   CTRL — down\nF — flight   B — 2-color blue-noise   C — side cameras   F3 — FPS\nLMB — shoot   ESC — cursor", 18);
             help.RectPosition = new Vector2(24, 20);
             hud.AddChild(help);
 
@@ -175,6 +176,10 @@ namespace PereSkyroom
 			_ditherLabel = NewLabel("DITHER: OFF", 20);
 			_ditherLabel.RectPosition = new Vector2(24, 144);
 			hud.AddChild(_ditherLabel);
+
+			_sideCameraLabel = NewLabel("CAMERAS: FORWARD", 20);
+			_sideCameraLabel.RectPosition = new Vector2(24, 172);
+			hud.AddChild(_sideCameraLabel);
 
             _messageLabel = NewLabel(string.Empty, 25);
             _messageLabel.AnchorLeft = 0.5f;
@@ -259,6 +264,18 @@ namespace PereSkyroom
 			_ditherLabel.Text = enabled ? "DITHER: BLUE-NOISE / 2 COLORS" : "DITHER: OFF";
 			_ditherLabel.Modulate = enabled ? new Color(1.0f, 0.86f, 0.42f) : new Color(0.72f, 0.76f, 0.84f);
 			ShowMessage(enabled ? "2-COLOR DITHER ENABLED" : "2-COLOR DITHER DISABLED");
+		}
+
+		public Transform GetViewTransform()
+		{
+			return _camera.GlobalTransform;
+		}
+
+		public void SetSideCameraMode(bool enabled)
+		{
+			_sideCameraLabel.Text = enabled ? "CAMERAS: SIDE VIEWS" : "CAMERAS: FORWARD";
+			_sideCameraLabel.Modulate = enabled ? new Color(0.48f, 0.9f, 1.0f) : new Color(0.72f, 0.76f, 0.84f);
+			ShowMessage(enabled ? "SIDE CAMERAS ENABLED" : "FORWARD CAMERA ENABLED");
 		}
     }
 }
