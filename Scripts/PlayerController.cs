@@ -12,6 +12,7 @@ namespace PereSkyroom
 
         private Spatial _head;
         private Camera _camera;
+		private MeshInstance _gun;
         private Label _modeLabel;
         private Label _scoreLabel;
 		private Label _ditherLabel;
@@ -78,6 +79,12 @@ namespace PereSkyroom
                 ShowMessage(_flightMode ? "FLIGHT ENABLED" : "FLIGHT DISABLED");
             }
 
+			if (Input.IsActionJustPressed("toggle_weapon_visibility"))
+			{
+				_gun.Visible = !_gun.Visible;
+				ShowMessage(_gun.Visible ? "WEAPON SHOWN" : "WEAPON HIDDEN");
+			}
+
             Vector2 input = new Vector2(
                 Input.GetActionStrength("move_right") - Input.GetActionStrength("move_left"),
                 Input.GetActionStrength("move_backward") - Input.GetActionStrength("move_forward"));
@@ -141,7 +148,7 @@ namespace PereSkyroom
             _camera = new Camera { Name = "Camera", Current = true, Fov = 78.0f, Far = 200.0f };
             _head.AddChild(_camera);
 
-            var gun = new MeshInstance
+			_gun = new MeshInstance
             {
                 Name = "Blaster",
                 Mesh = new CubeMesh { Size = new Vector3(0.22f, 0.18f, 0.7f) },
@@ -153,7 +160,7 @@ namespace PereSkyroom
                     Roughness = 0.25f
                 }
             };
-            _camera.AddChild(gun);
+			_camera.AddChild(_gun);
         }
 
         private void BuildHud()
@@ -161,7 +168,7 @@ namespace PereSkyroom
 			var hud = new CanvasLayer { Name = "HUD", Layer = 900 };
             AddChild(hud);
 
-			var help = NewLabel("WASD — move   SPACE — jump/up   CTRL — down\nF — flight   B — 2-color blue-noise   C — side cameras   F3 — FPS\nLMB — shoot   ESC — cursor", 18);
+			var help = NewLabel("WASD — move   SPACE — jump/up   CTRL — down\nF — flight   B — 2-color blue-noise   C — side cameras   F3 — FPS\nH — show/hide weapon   LMB — shoot   ESC — cursor", 18);
             help.RectPosition = new Vector2(24, 20);
             hud.AddChild(help);
 
