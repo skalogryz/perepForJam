@@ -4,6 +4,9 @@ namespace PereSkyroom
 {
 	public class Main : Spatial
 	{
+		[Export] public Color DitherDarkColor = new Color(0.035f, 0.045f, 0.075f, 1.0f);
+		[Export] public Color DitherLightColor = new Color(0.95f, 0.82f, 0.36f, 1.0f);
+
 		private readonly Color _floorColor = new Color(0.16f, 0.19f, 0.26f);
 		private readonly Color _wallColor = new Color(0.10f, 0.13f, 0.20f);
 		private readonly Color _platformColor = new Color(0.18f, 0.55f, 0.72f);
@@ -14,14 +17,15 @@ namespace PereSkyroom
 			BuildRoom();
 			BuildPlatforms();
 			BuildTargets();
-			BuildPlayer();
+			PlayerController player = BuildPlayer();
+			BlueNoiseDither dither = BuildDitherPostProcess(player);
 
 			foreach (string argument in OS.GetCmdlineArgs())
 			{
 				if (argument == "--smoke-test" || argument == "--no-window")
 				{
-					GD.Print("PERE_SMOKE_TEST_OK");
-					GetTree().Quit();
+					dither.SetEnabled(true);
+					RunSmokeTest();
 					break;
 				}
 			}
@@ -94,11 +98,33 @@ namespace PereSkyroom
 			AddTarget(new Vector3(8.8f, 1.3f, -9.5f));
 		}
 
-		private void BuildPlayer()
+		private PlayerController BuildPlayer()
 		{
 			var player = new PlayerController { Name = "Player" };
 			AddChild(player);
 			player.Translation = new Vector3(0, 1.2f, 8.0f);
+			return player;
+		}
+
+		private BlueNoiseDither BuildDitherPostProcess(PlayerController player)
+		{
+			var dither = new BlueNoiseDither
+			{
+				Name = "BlueNoiseDither",
+				DarkColor = DitherDarkColor,
+				LightColor = DitherLightColor,
+				Player = player
+			};
+			AddChild(dither);
+			return dither;
+		}
+
+		private async void RunSmokeTest()
+		{
+			await ToSignal(GetTree(), "idle_frame");
+			await ToSignal(GetTree(), "idle_frame");
+			GD.Print("PERE_DITHER_SMOKE_TEST_OK");
+			GetTree().Quit();
 		}
 
 		private void AddTarget(Vector3 position)

@@ -14,6 +14,7 @@ namespace PereSkyroom
         private Camera _camera;
         private Label _modeLabel;
         private Label _scoreLabel;
+		private Label _ditherLabel;
         private Label _messageLabel;
         private Vector3 _velocity = Vector3.Zero;
         private float _pitch;
@@ -132,7 +133,7 @@ namespace PereSkyroom
             var hud = new CanvasLayer { Name = "HUD" };
             AddChild(hud);
 
-            var help = NewLabel("WASD — move   SPACE — jump/up   CTRL — down\nF — toggle flight   LMB — shoot   ESC — cursor", 18);
+            var help = NewLabel("WASD — move   SPACE — jump/up   CTRL — down\nF — flight   B — 2-color blue-noise   LMB — shoot   ESC — cursor", 18);
             help.RectPosition = new Vector2(24, 20);
             hud.AddChild(help);
 
@@ -143,6 +144,10 @@ namespace PereSkyroom
             _scoreLabel = NewLabel(string.Empty, 20);
             _scoreLabel.RectPosition = new Vector2(24, 116);
             hud.AddChild(_scoreLabel);
+
+			_ditherLabel = NewLabel("DITHER: OFF", 20);
+			_ditherLabel.RectPosition = new Vector2(24, 144);
+			hud.AddChild(_ditherLabel);
 
             _messageLabel = NewLabel(string.Empty, 25);
             _messageLabel.AnchorLeft = 0.5f;
@@ -212,5 +217,12 @@ namespace PereSkyroom
             _modeLabel.Modulate = _flightMode ? new Color(0.45f, 0.95f, 1.0f) : new Color(0.65f, 1.0f, 0.65f);
             _scoreLabel.Text = "TARGETS HIT: " + _score + " / 5";
         }
+
+		public void SetDitherMode(bool enabled)
+		{
+			_ditherLabel.Text = enabled ? "DITHER: BLUE-NOISE / 2 COLORS" : "DITHER: OFF";
+			_ditherLabel.Modulate = enabled ? new Color(1.0f, 0.86f, 0.42f) : new Color(0.72f, 0.76f, 0.84f);
+			ShowMessage(enabled ? "2-COLOR DITHER ENABLED" : "2-COLOR DITHER DISABLED");
+		}
     }
 }
