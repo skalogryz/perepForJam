@@ -16,10 +16,13 @@ namespace PereSkyroom
         private Label _scoreLabel;
 		private Label _ditherLabel;
         private Label _messageLabel;
+		private Label _fpsLabel;
         private Vector3 _velocity = Vector3.Zero;
         private float _pitch;
         private bool _flightMode;
         private int _score;
+		private bool _fpsVisible;
+		private float _fpsRefreshTimer;
 
         public override void _Ready()
         {
@@ -40,10 +43,21 @@ namespace PereSkyroom
             }
 
             var key = inputEvent as InputEventKey;
-            if (key != null && key.Pressed && !key.Echo && key.Scancode == (uint)KeyList.Escape)
-                Input.MouseMode = Input.MouseMode == Input.MouseModeEnum.Captured
-                    ? Input.MouseModeEnum.Visible
-                    : Input.MouseModeEnum.Captured;
+			if (key != null && key.Pressed && !key.Echo)
+			{
+				if (key.Scancode == (uint)KeyList.Escape)
+				{
+					Input.MouseMode = Input.MouseMode == Input.MouseModeEnum.Captured
+						? Input.MouseModeEnum.Visible
+						: Input.MouseModeEnum.Captured;
+				}
+				else if (key.Scancode == (uint)KeyList.F3)
+				{
+					_fpsVisible = !_fpsVisible;
+					_fpsLabel.Visible = _fpsVisible;
+					_fpsRefreshTimer = 0.0f;
+				}
+			}
 
             var mouseButton = inputEvent as InputEventMouseButton;
             if (mouseButton != null && mouseButton.Pressed && mouseButton.ButtonIndex == (int)ButtonList.Left)
@@ -99,6 +113,19 @@ namespace PereSkyroom
             }
         }
 
+		public override void _Process(float delta)
+		{
+			if (!_fpsVisible)
+				return;
+
+			_fpsRefreshTimer -= delta;
+			if (_fpsRefreshTimer <= 0.0f)
+			{
+				_fpsLabel.Text = "FPS: " + Engine.GetFramesPerSecond();
+				_fpsRefreshTimer = 0.2f;
+			}
+		}
+
         private void BuildBody()
         {
             var collider = new CollisionShape
@@ -133,7 +160,7 @@ namespace PereSkyroom
             var hud = new CanvasLayer { Name = "HUD" };
             AddChild(hud);
 
-            var help = NewLabel("WASD — move   SPACE — jump/up   CTRL — down\nF — flight   B — 2-color blue-noise   LMB — shoot   ESC — cursor", 18);
+            var help = NewLabel("WASD — move   SPACE — jump/up   CTRL — down\nF — flight   B — 2-color blue-noise   F3 — FPS   LMB — shoot   ESC — cursor", 18);
             help.RectPosition = new Vector2(24, 20);
             hud.AddChild(help);
 
@@ -156,6 +183,15 @@ namespace PereSkyroom
             _messageLabel.RectSize = new Vector2(250, 36);
             _messageLabel.Align = Label.AlignEnum.Center;
             hud.AddChild(_messageLabel);
+
+			_fpsLabel = NewLabel("FPS: --", 20);
+			_fpsLabel.AnchorLeft = 1.0f;
+			_fpsLabel.AnchorRight = 1.0f;
+			_fpsLabel.RectPosition = new Vector2(-190, 20);
+			_fpsLabel.RectSize = new Vector2(160, 32);
+			_fpsLabel.Align = Label.AlignEnum.Right;
+			_fpsLabel.Visible = false;
+			hud.AddChild(_fpsLabel);
 
             var crosshair = NewLabel("+", 30);
             crosshair.AnchorLeft = 0.5f;
