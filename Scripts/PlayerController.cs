@@ -145,7 +145,14 @@ namespace PereSkyroom
 
             _head = new Spatial { Name = "Head", Translation = new Vector3(0, 1.55f, 0) };
             AddChild(_head);
-            _camera = new Camera { Name = "Camera", Current = true, Fov = 78.0f, Far = 200.0f };
+			_camera = new Camera
+			{
+				Name = "Camera",
+				Current = true,
+				Fov = 78.0f,
+				Far = 200.0f,
+				KeepAspect = Camera.KeepAspectEnum.Width
+			};
             _head.AddChild(_camera);
 
 			_gun = new MeshInstance
@@ -168,7 +175,7 @@ namespace PereSkyroom
 			var hud = new CanvasLayer { Name = "HUD", Layer = 900 };
             AddChild(hud);
 
-			var help = NewLabel("WASD — move   SPACE — jump/up   CTRL — down\nF — flight   B — 2-color blue-noise   C — side cameras   F3 — FPS\nH — show/hide weapon   LMB — shoot   ESC — cursor", 18);
+			var help = NewLabel("WASD — move   SPACE — jump/up   CTRL — down\nF — flight   B — 2-color blue-noise   C — side cameras   V — panoramic FOV\nF3 — FPS   H — show/hide weapon   LMB — shoot   ESC — cursor", 18);
             help.RectPosition = new Vector2(24, 20);
             hud.AddChild(help);
 
@@ -276,6 +283,16 @@ namespace PereSkyroom
 		public Transform GetViewTransform()
 		{
 			return _camera.GlobalTransform;
+		}
+
+		public float GetNormalFovDegrees()
+		{
+			return _camera.Fov;
+		}
+
+		public void ShowPanoramicFovMessage(bool enabled, float targetFov)
+		{
+			ShowMessage(enabled ? "PANORAMIC FOV " + Mathf.Round(targetFov) + "°" : "NORMAL FOV");
 		}
 
 		public void SetSideCameraMode(bool enabled)
