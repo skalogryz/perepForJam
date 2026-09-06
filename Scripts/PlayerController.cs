@@ -13,6 +13,7 @@ namespace PereSkyroom
         private Spatial _head;
         private Camera _camera;
 		private MeshInstance _gun;
+		private CanvasLayer _hud;
         private Label _modeLabel;
         private Label _scoreLabel;
 		private Label _ditherLabel;
@@ -84,6 +85,9 @@ namespace PereSkyroom
 				_gun.Visible = !_gun.Visible;
 				ShowMessage(_gun.Visible ? "WEAPON SHOWN" : "WEAPON HIDDEN");
 			}
+
+			if (Input.IsActionJustPressed("toggle_hud_labels"))
+				_hud.Visible = !_hud.Visible;
 
             Vector2 input = new Vector2(
                 Input.GetActionStrength("move_right") - Input.GetActionStrength("move_left"),
@@ -172,28 +176,28 @@ namespace PereSkyroom
 
         private void BuildHud()
         {
-			var hud = new CanvasLayer { Name = "HUD", Layer = 900 };
-            AddChild(hud);
+			_hud = new CanvasLayer { Name = "HUD", Layer = 900 };
+			AddChild(_hud);
 
-			var help = NewLabel("WASD — move   SPACE — jump/up   CTRL — down\nF — flight   B — 2-color blue-noise   C — side cameras   V — panoramic FOV\nF3 — FPS   H — show/hide weapon   LMB — shoot   ESC — cursor", 18);
+			var help = NewLabel("WASD — move   SPACE — jump/up   CTRL — down\nF — flight   B — 2-color blue-noise   C — side cameras   V — panoramic FOV\nF3 — FPS   H — weapon   L — labels   LMB — shoot   ESC — cursor", 18);
             help.RectPosition = new Vector2(24, 20);
-            hud.AddChild(help);
+			_hud.AddChild(help);
 
             _modeLabel = NewLabel(string.Empty, 20);
             _modeLabel.RectPosition = new Vector2(24, 88);
-            hud.AddChild(_modeLabel);
+			_hud.AddChild(_modeLabel);
 
             _scoreLabel = NewLabel(string.Empty, 20);
             _scoreLabel.RectPosition = new Vector2(24, 116);
-            hud.AddChild(_scoreLabel);
+			_hud.AddChild(_scoreLabel);
 
 			_ditherLabel = NewLabel("DITHER: OFF", 20);
 			_ditherLabel.RectPosition = new Vector2(24, 144);
-			hud.AddChild(_ditherLabel);
+			_hud.AddChild(_ditherLabel);
 
 			_sideCameraLabel = NewLabel("CAMERAS: FORWARD", 20);
 			_sideCameraLabel.RectPosition = new Vector2(24, 172);
-			hud.AddChild(_sideCameraLabel);
+			_hud.AddChild(_sideCameraLabel);
 
             _messageLabel = NewLabel(string.Empty, 25);
             _messageLabel.AnchorLeft = 0.5f;
@@ -201,7 +205,7 @@ namespace PereSkyroom
             _messageLabel.RectPosition = new Vector2(-125, 54);
             _messageLabel.RectSize = new Vector2(250, 36);
             _messageLabel.Align = Label.AlignEnum.Center;
-            hud.AddChild(_messageLabel);
+			_hud.AddChild(_messageLabel);
 
 			_fpsLabel = NewLabel("FPS: --", 20);
 			_fpsLabel.AnchorLeft = 1.0f;
@@ -210,7 +214,7 @@ namespace PereSkyroom
 			_fpsLabel.RectSize = new Vector2(160, 32);
 			_fpsLabel.Align = Label.AlignEnum.Right;
 			_fpsLabel.Visible = false;
-			hud.AddChild(_fpsLabel);
+			_hud.AddChild(_fpsLabel);
 
             var crosshair = NewLabel("+", 30);
             crosshair.AnchorLeft = 0.5f;
@@ -218,7 +222,7 @@ namespace PereSkyroom
             crosshair.AnchorRight = 0.5f;
             crosshair.AnchorBottom = 0.5f;
             crosshair.RectPosition = new Vector2(-10, -20);
-            hud.AddChild(crosshair);
+			_hud.AddChild(crosshair);
         }
 
         private Label NewLabel(string text, int size)
