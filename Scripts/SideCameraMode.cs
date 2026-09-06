@@ -65,6 +65,16 @@ namespace PereSkyroom
 				Player.SetSideCameraMode(enabled);
 		}
 
+		public bool IsEnabled()
+		{
+			return _enabled;
+		}
+
+		public Camera GetCamera(int index)
+		{
+			return index == 0 ? _leftCamera : _rightCamera;
+		}
+
 		private Viewport CreateCameraViewport(string name, out Camera camera)
 		{
 			var viewport = new Viewport

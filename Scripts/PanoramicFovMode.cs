@@ -61,6 +61,16 @@ namespace PereSkyroom
 				Player.ShowPanoramicFovMessage(enabled, TargetFovDegrees);
 		}
 
+		public bool IsRenderingActive()
+		{
+			return _targetEnabled || _blend > 0.0f;
+		}
+
+		public Camera GetCamera(int index)
+		{
+			return _cameras[Mathf.Clamp(index, 0, 2)];
+		}
+
 		private Viewport CreateViewport(string name, out Camera camera)
 		{
 			var viewport = new Viewport

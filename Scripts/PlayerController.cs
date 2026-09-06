@@ -289,6 +289,11 @@ namespace PereSkyroom
 			return _camera.GlobalTransform;
 		}
 
+		public Camera GetViewCamera()
+		{
+			return _camera;
+		}
+
 		public float GetNormalFovDegrees()
 		{
 			return _camera.Fov;

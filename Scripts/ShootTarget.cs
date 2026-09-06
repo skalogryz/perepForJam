@@ -2,9 +2,10 @@ using Godot;
 
 namespace PereSkyroom
 {
-    public class ShootTarget : StaticBody
-    {
-        private bool _destroyed;
+	public class ShootTarget : StaticBody
+	{
+		public readonly Vector3 AccentHalfExtents = new Vector3(0.5f, 0.65f, 0.18f);
+		private bool _destroyed;
 
         public override void _Ready()
         {
@@ -38,4 +39,3 @@ namespace PereSkyroom
         }
     }
 }
-

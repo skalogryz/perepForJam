@@ -1,4 +1,5 @@
 using Godot;
+using System.Collections.Generic;
 
 namespace PereSkyroom
 {
@@ -14,6 +15,8 @@ namespace PereSkyroom
 		// are rendered by the three-camera panoramic compositor.
 		public float PanoramicFovDegrees = 270.0f;
 		public float PanoramicFovTransitionDurationSeconds = 0.5f;
+		public float AccentWireframeWidthPixels = 3.0f;
+		[Export] public Color AccentWireframeColor = new Color(0.0f, 1.0f, 0.0f, 1.0f);
 
 		private readonly Color _floorColor = new Color(0.16f, 0.19f, 0.26f);
 		private readonly Color _wallColor = new Color(0.10f, 0.13f, 0.20f);
@@ -24,11 +27,12 @@ namespace PereSkyroom
 			BuildEnvironment();
 			BuildRoom();
 			BuildPlatforms();
-			BuildTargets();
+			List<ShootTarget> targets = BuildTargets();
 			PlayerController player = BuildPlayer();
 			SideCameraMode sideCameraMode = BuildSideCameraMode(player);
 			PanoramicFovMode panoramicFovMode = BuildPanoramicFovMode(player);
 			BlueNoiseDither dither = BuildDitherPostProcess(player);
+			AccentWireframeOverlay wireframe = BuildAccentWireframe(targets, player, sideCameraMode, panoramicFovMode, dither);
 
 			foreach (string argument in OS.GetCmdlineArgs())
 			{
@@ -37,7 +41,7 @@ namespace PereSkyroom
 					sideCameraMode.SetEnabled(true);
 					panoramicFovMode.SetEnabled(true);
 					dither.SetEnabled(true);
-					RunSmokeTest();
+					RunSmokeTest(wireframe);
 					break;
 				}
 			}
@@ -101,13 +105,15 @@ namespace PereSkyroom
 			AddBox("FloatingStep", new Vector3(6.5f, 1.2f, 5.2f), new Vector3(2.4f, 0.45f, 2.4f), new Color(0.55f, 0.3f, 0.72f));
 		}
 
-		private void BuildTargets()
+		private List<ShootTarget> BuildTargets()
 		{
-			AddTarget(new Vector3(-5.5f, 2.2f, 1.2f));
-			AddTarget(new Vector3(0.0f, 3.4f, -2.3f));
-			AddTarget(new Vector3(5.4f, 4.6f, -6.0f));
-			AddTarget(new Vector3(-3.5f, 5.8f, -8.8f));
-			AddTarget(new Vector3(8.8f, 1.3f, -9.5f));
+			var targets = new List<ShootTarget>();
+			targets.Add(AddTarget(new Vector3(-5.5f, 2.2f, 1.2f)));
+			targets.Add(AddTarget(new Vector3(0.0f, 3.4f, -2.3f)));
+			targets.Add(AddTarget(new Vector3(5.4f, 4.6f, -6.0f)));
+			targets.Add(AddTarget(new Vector3(-3.5f, 5.8f, -8.8f)));
+			targets.Add(AddTarget(new Vector3(8.8f, 1.3f, -9.5f)));
+			return targets;
 		}
 
 		private PlayerController BuildPlayer()
@@ -158,18 +164,47 @@ namespace PereSkyroom
 			return mode;
 		}
 
-		private async void RunSmokeTest()
+		private AccentWireframeOverlay BuildAccentWireframe(
+			List<ShootTarget> targets,
+			PlayerController player,
+			SideCameraMode sideCameraMode,
+			PanoramicFovMode panoramicFovMode,
+			BlueNoiseDither dither)
+		{
+			var overlay = new AccentWireframeOverlay
+			{
+				Name = "AccentWireframeOverlay",
+				Targets = targets,
+				Player = player,
+				SideCameraMode = sideCameraMode,
+				PanoramicFovMode = panoramicFovMode,
+				Dither = dither,
+				LineWidthPixels = AccentWireframeWidthPixels,
+				AccentColor = AccentWireframeColor
+			};
+			AddChild(overlay);
+			return overlay;
+		}
+
+		private async void RunSmokeTest(AccentWireframeOverlay wireframe)
 		{
 			await ToSignal(GetTree().CreateTimer(0.7f), "timeout");
+			if (wireframe.DrawPassCount <= 0)
+			{
+				GD.PushError("Accent wireframe did not complete a draw pass.");
+				GetTree().Quit(1);
+				return;
+			}
 			GD.Print("PERE_DITHER_SMOKE_TEST_OK");
 			GetTree().Quit();
 		}
 
-		private void AddTarget(Vector3 position)
+		private ShootTarget AddTarget(Vector3 position)
 		{
 			var target = new ShootTarget();
 			AddChild(target);
 			target.Translation = position;
+			return target;
 		}
 
 		private void AddBox(string name, Vector3 position, Vector3 size, Color color)

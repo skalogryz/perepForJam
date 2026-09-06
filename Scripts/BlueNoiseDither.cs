@@ -30,6 +30,7 @@ void fragment() {
 		private ColorRect _overlay;
 		private ShaderMaterial _material;
 		private bool _enabled;
+		public bool Enabled { get { return _enabled; } }
 
 		public override void _Ready()
 		{
