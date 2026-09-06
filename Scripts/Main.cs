@@ -10,6 +10,10 @@ namespace PereSkyroom
 		public float SideCameraAngleDegrees = 90.0f;
 		public bool SmoothSideCameraTransitionEnabled = true;
 		public float SideCameraTransitionDurationSeconds = 0.5f;
+		// Godot perspective cameras cannot exceed 179 degrees, so values above that
+		// are rendered by the three-camera panoramic compositor.
+		public float PanoramicFovDegrees = 270.0f;
+		public float PanoramicFovTransitionDurationSeconds = 0.5f;
 
 		private readonly Color _floorColor = new Color(0.16f, 0.19f, 0.26f);
 		private readonly Color _wallColor = new Color(0.10f, 0.13f, 0.20f);
@@ -23,6 +27,7 @@ namespace PereSkyroom
 			BuildTargets();
 			PlayerController player = BuildPlayer();
 			SideCameraMode sideCameraMode = BuildSideCameraMode(player);
+			PanoramicFovMode panoramicFovMode = BuildPanoramicFovMode(player);
 			BlueNoiseDither dither = BuildDitherPostProcess(player);
 
 			foreach (string argument in OS.GetCmdlineArgs())
@@ -30,6 +35,7 @@ namespace PereSkyroom
 				if (argument == "--smoke-test" || argument == "--no-window")
 				{
 					sideCameraMode.SetEnabled(true);
+					panoramicFovMode.SetEnabled(true);
 					dither.SetEnabled(true);
 					RunSmokeTest();
 					break;
@@ -139,9 +145,22 @@ namespace PereSkyroom
 			return mode;
 		}
 
+		private PanoramicFovMode BuildPanoramicFovMode(PlayerController player)
+		{
+			var mode = new PanoramicFovMode
+			{
+				Name = "PanoramicFovMode",
+				Player = player,
+				TargetFovDegrees = PanoramicFovDegrees,
+				TransitionDurationSeconds = PanoramicFovTransitionDurationSeconds
+			};
+			AddChild(mode);
+			return mode;
+		}
+
 		private async void RunSmokeTest()
 		{
-			await ToSignal(GetTree().CreateTimer(0.6f), "timeout");
+			await ToSignal(GetTree().CreateTimer(0.7f), "timeout");
 			GD.Print("PERE_DITHER_SMOKE_TEST_OK");
 			GetTree().Quit();
 		}
