@@ -125,6 +125,9 @@ custom_constants/shadow_offset_x = 2
 custom_constants/shadow_offset_y = 2
 text = "+"
 
+[node name="DialogueHUD" type="CanvasLayer" parent="."]
+layer = 1150
+
 [node name="PlayerStatsHUD" type="CanvasLayer" parent="."]
 layer = 1200
 
