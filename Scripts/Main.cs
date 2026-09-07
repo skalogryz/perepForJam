@@ -16,7 +16,7 @@ namespace PereSkyroom
 		public float PanoramicFovDegrees = 270.0f;
 		public float PanoramicFovTransitionDurationSeconds = 0.5f;
 		public float AccentWireframeWidthPixels = 3.0f;
-		public Color AccentWireframeColor = new Color(0.0f, 1.0f, 0.0f, 1.0f);
+		[Export] public Color AccentWireframeColor = new Color(0.0f, 1.0f, 0.0f, 1.0f);
 		public bool AccentObjectDitherEnabledByDefault = false;
 
 		private readonly Color _floorColor = new Color(0.16f, 0.19f, 0.26f);

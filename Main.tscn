@@ -6,3 +6,4 @@
 script = ExtResource( 1 )
 DitherDarkColor = Color( 0.0352941, 0.0431373, 0.0745098, 1 )
 DitherLightColor = Color( 0.854902, 0.909804, 0.901961, 1 )
+AccentWireframeColor = Color( 0.682353, 1, 0, 1 )
