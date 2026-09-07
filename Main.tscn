@@ -7,3 +7,115 @@ script = ExtResource( 1 )
 DitherDarkColor = Color( 0.0352941, 0.0431373, 0.0745098, 1 )
 DitherLightColor = Color( 0.854902, 0.909804, 0.901961, 1 )
 AccentWireframeColor = Color( 0.682353, 1, 0, 1 )
+
+[node name="HUD" type="CanvasLayer" parent="."]
+layer = 900
+
+[node name="HelpLabel" type="Label" parent="HUD"]
+margin_left = 24.0
+margin_top = 20.0
+margin_right = 24.0
+margin_bottom = 20.0
+rect_scale = Vector2( 1.28571, 1.28571 )
+custom_colors/font_color = Color( 0.9, 0.96, 1, 1 )
+custom_colors/font_color_shadow = Color( 0, 0, 0, 0.85 )
+custom_constants/shadow_offset_x = 2
+custom_constants/shadow_offset_y = 2
+text = "WASD — move   SPACE — jump/up   CTRL — down
+F — flight   B — 2-color blue-noise   G — accent object dither
+C — side cameras   V — panoramic FOV   F3 — FPS   H — weapon   L — labels
+LMB — shoot   ESC — cursor"
+
+[node name="ModeLabel" type="Label" parent="HUD"]
+margin_left = 24.0
+margin_top = 88.0
+margin_right = 24.0
+margin_bottom = 88.0
+rect_scale = Vector2( 1.42857, 1.42857 )
+custom_colors/font_color = Color( 0.9, 0.96, 1, 1 )
+custom_colors/font_color_shadow = Color( 0, 0, 0, 0.85 )
+custom_constants/shadow_offset_x = 2
+custom_constants/shadow_offset_y = 2
+text = "MODE: WALK"
+
+[node name="ScoreLabel" type="Label" parent="HUD"]
+margin_left = 24.0
+margin_top = 116.0
+margin_right = 24.0
+margin_bottom = 116.0
+rect_scale = Vector2( 1.42857, 1.42857 )
+custom_colors/font_color = Color( 0.9, 0.96, 1, 1 )
+custom_colors/font_color_shadow = Color( 0, 0, 0, 0.85 )
+custom_constants/shadow_offset_x = 2
+custom_constants/shadow_offset_y = 2
+text = "TARGETS HIT: 0 / 5"
+
+[node name="DitherLabel" type="Label" parent="HUD"]
+margin_left = 24.0
+margin_top = 144.0
+margin_right = 24.0
+margin_bottom = 144.0
+rect_scale = Vector2( 1.42857, 1.42857 )
+custom_colors/font_color = Color( 0.9, 0.96, 1, 1 )
+custom_colors/font_color_shadow = Color( 0, 0, 0, 0.85 )
+custom_constants/shadow_offset_x = 2
+custom_constants/shadow_offset_y = 2
+text = "DITHER: OFF"
+
+[node name="SideCameraLabel" type="Label" parent="HUD"]
+margin_left = 24.0
+margin_top = 172.0
+margin_right = 24.0
+margin_bottom = 172.0
+rect_scale = Vector2( 1.42857, 1.42857 )
+custom_colors/font_color = Color( 0.9, 0.96, 1, 1 )
+custom_colors/font_color_shadow = Color( 0, 0, 0, 0.85 )
+custom_constants/shadow_offset_x = 2
+custom_constants/shadow_offset_y = 2
+text = "CAMERAS: FORWARD"
+
+[node name="MessageLabel" type="Label" parent="HUD"]
+anchor_left = 0.5
+anchor_right = 0.5
+margin_left = -125.0
+margin_top = 54.0
+margin_right = 125.0
+margin_bottom = 90.0
+rect_scale = Vector2( 1.78571, 1.78571 )
+custom_colors/font_color = Color( 0.9, 0.96, 1, 1 )
+custom_colors/font_color_shadow = Color( 0, 0, 0, 0.85 )
+custom_constants/shadow_offset_x = 2
+custom_constants/shadow_offset_y = 2
+align = 1
+
+[node name="FpsLabel" type="Label" parent="HUD"]
+visible = false
+anchor_left = 1.0
+anchor_right = 1.0
+margin_left = -230.0
+margin_top = 20.0
+margin_right = -70.0
+margin_bottom = 52.0
+rect_scale = Vector2( 1.42857, 1.42857 )
+custom_colors/font_color = Color( 0.9, 0.96, 1, 1 )
+custom_colors/font_color_shadow = Color( 0, 0, 0, 0.85 )
+custom_constants/shadow_offset_x = 2
+custom_constants/shadow_offset_y = 2
+text = "FPS: --"
+align = 2
+
+[node name="CrosshairLabel" type="Label" parent="HUD"]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+margin_left = -10.0
+margin_top = -20.0
+margin_right = -10.0
+margin_bottom = -20.0
+rect_scale = Vector2( 2.14286, 2.14286 )
+custom_colors/font_color = Color( 0.9, 0.96, 1, 1 )
+custom_colors/font_color_shadow = Color( 0, 0, 0, 0.85 )
+custom_constants/shadow_offset_x = 2
+custom_constants/shadow_offset_y = 2
+text = "+"

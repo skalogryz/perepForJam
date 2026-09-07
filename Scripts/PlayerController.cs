@@ -30,7 +30,7 @@ namespace PereSkyroom
         public override void _Ready()
         {
             BuildBody();
-            BuildHud();
+            BindHud();
             Input.MouseMode = Input.MouseModeEnum.Captured;
             UpdateHud();
         }
@@ -174,66 +174,17 @@ namespace PereSkyroom
 			_camera.AddChild(_gun);
         }
 
-        private void BuildHud()
+        private void BindHud()
         {
-			_hud = new CanvasLayer { Name = "HUD", Layer = 900 };
-			AddChild(_hud);
-
-			var help = NewLabel("WASD — move   SPACE — jump/up   CTRL — down\nF — flight   B — 2-color blue-noise   G — accent object dither\nC — side cameras   V — panoramic FOV   F3 — FPS   H — weapon   L — labels\nLMB — shoot   ESC — cursor", 18);
-            help.RectPosition = new Vector2(24, 20);
-			_hud.AddChild(help);
-
-            _modeLabel = NewLabel(string.Empty, 20);
-            _modeLabel.RectPosition = new Vector2(24, 88);
-			_hud.AddChild(_modeLabel);
-
-            _scoreLabel = NewLabel(string.Empty, 20);
-            _scoreLabel.RectPosition = new Vector2(24, 116);
-			_hud.AddChild(_scoreLabel);
-
-			_ditherLabel = NewLabel("DITHER: OFF", 20);
-			_ditherLabel.RectPosition = new Vector2(24, 144);
-			_hud.AddChild(_ditherLabel);
-
-			_sideCameraLabel = NewLabel("CAMERAS: FORWARD", 20);
-			_sideCameraLabel.RectPosition = new Vector2(24, 172);
-			_hud.AddChild(_sideCameraLabel);
-
-            _messageLabel = NewLabel(string.Empty, 25);
-            _messageLabel.AnchorLeft = 0.5f;
-            _messageLabel.AnchorRight = 0.5f;
-            _messageLabel.RectPosition = new Vector2(-125, 54);
-            _messageLabel.RectSize = new Vector2(250, 36);
-            _messageLabel.Align = Label.AlignEnum.Center;
-			_hud.AddChild(_messageLabel);
-
-			_fpsLabel = NewLabel("FPS: --", 20);
-			_fpsLabel.AnchorLeft = 1.0f;
-			_fpsLabel.AnchorRight = 1.0f;
-			_fpsLabel.RectPosition = new Vector2(-230, 20);
-			_fpsLabel.RectSize = new Vector2(160, 32);
-			_fpsLabel.Align = Label.AlignEnum.Right;
-			_fpsLabel.Visible = false;
-			_hud.AddChild(_fpsLabel);
-
-            var crosshair = NewLabel("+", 30);
-            crosshair.AnchorLeft = 0.5f;
-            crosshair.AnchorTop = 0.5f;
-            crosshair.AnchorRight = 0.5f;
-            crosshair.AnchorBottom = 0.5f;
-            crosshair.RectPosition = new Vector2(-10, -20);
-			_hud.AddChild(crosshair);
-        }
-
-        private Label NewLabel(string text, int size)
-        {
-            var label = new Label { Text = text };
-            label.RectScale = new Vector2(size / 14.0f, size / 14.0f);
-            label.AddColorOverride("font_color", new Color(0.9f, 0.96f, 1.0f));
-            label.AddColorOverride("font_color_shadow", new Color(0, 0, 0, 0.85f));
-            label.AddConstantOverride("shadow_offset_x", 2);
-            label.AddConstantOverride("shadow_offset_y", 2);
-            return label;
+			Node hudOwner = GetParent();
+			_hud = hudOwner.GetNode<CanvasLayer>("HUD");
+			_modeLabel = _hud.GetNode<Label>("ModeLabel");
+			_scoreLabel = _hud.GetNode<Label>("ScoreLabel");
+			_ditherLabel = _hud.GetNode<Label>("DitherLabel");
+			_sideCameraLabel = _hud.GetNode<Label>("SideCameraLabel");
+			_messageLabel = _hud.GetNode<Label>("MessageLabel");
+			_fpsLabel = _hud.GetNode<Label>("FpsLabel");
+			_fpsVisible = _fpsLabel.Visible;
         }
 
         private void Shoot()
