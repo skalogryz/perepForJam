@@ -65,7 +65,14 @@ namespace PereSkyroom
             var key = inputEvent as InputEventKey;
 			if (key != null && key.Pressed && !key.Echo)
 			{
-				if (key.Scancode == (uint)KeyList.Escape)
+				bool isEnter = key.Scancode == (uint)KeyList.Enter
+					|| key.Scancode == (uint)KeyList.KpEnter;
+				if (key.Alt && isEnter)
+				{
+					OS.WindowFullscreen = !OS.WindowFullscreen;
+					GetTree().SetInputAsHandled();
+				}
+				else if (key.Scancode == (uint)KeyList.Escape)
 				{
 					Input.MouseMode = Input.MouseMode == Input.MouseModeEnum.Captured
 						? Input.MouseModeEnum.Visible
@@ -113,7 +120,10 @@ namespace PereSkyroom
 				SetWeaponVisible(!WeaponVisible, true);
 
 			if (Input.IsActionJustPressed("toggle_hud_labels"))
-				SetHudLabelsVisible(!HudLabelsVisible);
+			{
+				SetHudLabelsVisible(false);
+				//SetHudLabelsVisible(!HudLabelsVisible);
+			}
 
             Vector2 input = new Vector2(
                 Input.GetActionStrength("move_right") - Input.GetActionStrength("move_left"),

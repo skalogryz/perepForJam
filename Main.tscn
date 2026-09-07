@@ -29,7 +29,7 @@ custom_constants/shadow_offset_y = 2
 text = "WASD — move   SPACE — jump/up   CTRL — down   TAB — speed boost
 F — flight   B — 2-color blue-noise   I — invert palette   R — wireframe   G — accent object dither
 C — side cameras   V — panoramic FOV   F2 — reset level   F3 — FPS   H — weapon   L — labels
-LMB — shoot   ESC — cursor"
+LMB — shoot   ESC — cursor   ALT+ENTER — fullscreen"
 
 [node name="ModeLabel" type="Label" parent="HUD"]
 margin_left = 24.0
