@@ -7,6 +7,7 @@ namespace PereSkyroom
 	{
 		[Export] public Color DitherDarkColor = new Color(0.035f, 0.045f, 0.075f, 1.0f);
 		[Export] public Color DitherLightColor = new Color(0.95f, 0.82f, 0.36f, 1.0f);
+		public bool DitherPaletteInvertedByDefault = false;
 		// Change this value in code to configure both side-camera yaw offsets.
 		public float SideCameraAngleDegrees = 90.0f;
 		public bool SmoothSideCameraTransitionEnabled = true;
@@ -135,6 +136,7 @@ namespace PereSkyroom
 				Name = "BlueNoiseDither",
 				DarkColor = DitherDarkColor,
 				LightColor = DitherLightColor,
+				InvertPaletteByDefault = DitherPaletteInvertedByDefault,
 				Player = player
 			};
 			AddChild(dither);

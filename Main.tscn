@@ -22,7 +22,7 @@ custom_colors/font_color_shadow = Color( 0, 0, 0, 0.85 )
 custom_constants/shadow_offset_x = 2
 custom_constants/shadow_offset_y = 2
 text = "WASD — move   SPACE — jump/up   CTRL — down
-F — flight   B — 2-color blue-noise   G — accent object dither
+F — flight   B — 2-color blue-noise   I — invert palette   G — accent object dither
 C — side cameras   V — panoramic FOV   F3 — FPS   H — weapon   L — labels
 LMB — shoot   ESC — cursor"
 

@@ -96,6 +96,8 @@ void fragment() {
 			UpdateProxyTransforms();
 			UpdateLayoutAndCameras();
 			_compositeMaterial.SetShaderParam("global_dither_enabled", Dither != null && Dither.Enabled);
+			_compositeMaterial.SetShaderParam("dark_color", Dither.EffectiveDarkColor);
+			_compositeMaterial.SetShaderParam("regular_light_color", Dither.EffectiveLightColor);
 			DrawPassCount++;
 		}
 
@@ -185,8 +187,8 @@ void fragment() {
 		{
 			_compositeMaterial = new ShaderMaterial { Shader = new Shader { Code = CompositeShader } };
 			_compositeMaterial.SetShaderParam("blue_noise", Dither.BlueNoiseTexture);
-			_compositeMaterial.SetShaderParam("dark_color", Dither.DarkColor);
-			_compositeMaterial.SetShaderParam("regular_light_color", Dither.LightColor);
+			_compositeMaterial.SetShaderParam("dark_color", Dither.EffectiveDarkColor);
+			_compositeMaterial.SetShaderParam("regular_light_color", Dither.EffectiveLightColor);
 			_compositeMaterial.SetShaderParam("accent_color", AccentColor);
 		}
 

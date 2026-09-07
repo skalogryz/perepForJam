@@ -29,8 +29,10 @@ namespace PereSkyroom
 		private Label _fpsLabel;
         private Vector3 _velocity = Vector3.Zero;
         private float _pitch;
-        private bool _flightMode;
-        private int _score;
+		private bool _flightMode;
+		private bool _ditherEnabled;
+		private bool _ditherPaletteInverted;
+		private int _score;
 		private bool _fpsVisible;
 		private float _fpsRefreshTimer;
 
@@ -313,9 +315,29 @@ namespace PereSkyroom
 
 		public void SetDitherMode(bool enabled)
 		{
-			_ditherLabel.Text = enabled ? "DITHER: BLUE-NOISE / 2 COLORS" : "DITHER: OFF";
+			_ditherEnabled = enabled;
+			UpdateDitherLabel();
 			_ditherLabel.Modulate = enabled ? new Color(1.0f, 0.86f, 0.42f) : new Color(0.72f, 0.76f, 0.84f);
 			ShowMessage(enabled ? "2-COLOR DITHER ENABLED" : "2-COLOR DITHER DISABLED");
+		}
+
+		public void SetDitherPaletteInverted(bool inverted)
+		{
+			_ditherPaletteInverted = inverted;
+			UpdateDitherLabel();
+			ShowMessage(inverted ? "DITHER PALETTE INVERTED" : "DITHER PALETTE NORMAL");
+		}
+
+		private void UpdateDitherLabel()
+		{
+			if (!_ditherEnabled)
+			{
+				_ditherLabel.Text = "DITHER: OFF";
+				return;
+			}
+			_ditherLabel.Text = _ditherPaletteInverted
+				? "DITHER: BLUE-NOISE / INVERTED"
+				: "DITHER: BLUE-NOISE / 2 COLORS";
 		}
 
 		public Transform GetViewTransform()

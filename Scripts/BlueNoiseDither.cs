@@ -25,6 +25,7 @@ void fragment() {
 
 		public Color DarkColor = new Color(0.035f, 0.045f, 0.075f, 1.0f);
 		public Color LightColor = new Color(0.95f, 0.82f, 0.36f, 1.0f);
+		public bool InvertPaletteByDefault;
 		public PlayerController Player;
 		public AccentObjectDitherMode AccentDitherMode;
 
@@ -32,7 +33,11 @@ void fragment() {
 		private ShaderMaterial _material;
 		private ImageTexture _blueNoiseTexture;
 		private bool _enabled;
+		private bool _paletteInverted;
 		public bool Enabled { get { return _enabled; } }
+		public bool PaletteInverted { get { return _paletteInverted; } }
+		public Color EffectiveDarkColor { get { return _paletteInverted ? LightColor : DarkColor; } }
+		public Color EffectiveLightColor { get { return _paletteInverted ? DarkColor : LightColor; } }
 		public Texture BlueNoiseTexture { get { return _blueNoiseTexture; } }
 
 		public override void _Ready()
@@ -41,8 +46,8 @@ void fragment() {
 			_material = new ShaderMaterial { Shader = new Shader { Code = DitherShader } };
 			_blueNoiseTexture = CreateBlueNoiseTexture();
 			_material.SetShaderParam("blue_noise", _blueNoiseTexture);
-			_material.SetShaderParam("dark_color", DarkColor);
-			_material.SetShaderParam("light_color", LightColor);
+			_paletteInverted = InvertPaletteByDefault;
+			ApplyEffectivePalette();
 
 			_overlay = new ColorRect
 			{
@@ -58,10 +63,10 @@ void fragment() {
 
 		public override void _Process(float delta)
 		{
-			if (!Input.IsActionJustPressed("toggle_dither"))
-				return;
-
-			SetEnabled(!_enabled);
+			if (Input.IsActionJustPressed("toggle_dither"))
+				SetEnabled(!_enabled);
+			if (Input.IsActionJustPressed("toggle_dither_palette"))
+				SetPaletteInverted(!_paletteInverted);
 		}
 
 		public void SetEnabled(bool enabled)
@@ -79,11 +84,23 @@ void fragment() {
 		{
 			DarkColor = darkColor;
 			LightColor = lightColor;
-			if (_material != null)
-			{
-				_material.SetShaderParam("dark_color", DarkColor);
-				_material.SetShaderParam("light_color", LightColor);
-			}
+			ApplyEffectivePalette();
+		}
+
+		public void SetPaletteInverted(bool inverted)
+		{
+			_paletteInverted = inverted;
+			ApplyEffectivePalette();
+			if (Player != null && IsInstanceValid(Player))
+				Player.SetDitherPaletteInverted(_paletteInverted);
+		}
+
+		private void ApplyEffectivePalette()
+		{
+			if (_material == null)
+				return;
+			_material.SetShaderParam("dark_color", EffectiveDarkColor);
+			_material.SetShaderParam("light_color", EffectiveLightColor);
 		}
 
 		private ImageTexture CreateBlueNoiseTexture()
