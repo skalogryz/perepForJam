@@ -29,14 +29,17 @@ void fragment() {
 
 		private ColorRect _overlay;
 		private ShaderMaterial _material;
+		private ImageTexture _blueNoiseTexture;
 		private bool _enabled;
 		public bool Enabled { get { return _enabled; } }
+		public Texture BlueNoiseTexture { get { return _blueNoiseTexture; } }
 
 		public override void _Ready()
 		{
 			Layer = 1000;
 			_material = new ShaderMaterial { Shader = new Shader { Code = DitherShader } };
-			_material.SetShaderParam("blue_noise", CreateBlueNoiseTexture());
+			_blueNoiseTexture = CreateBlueNoiseTexture();
+			_material.SetShaderParam("blue_noise", _blueNoiseTexture);
 			_material.SetShaderParam("dark_color", DarkColor);
 			_material.SetShaderParam("light_color", LightColor);
 

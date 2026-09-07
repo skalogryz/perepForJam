@@ -179,7 +179,7 @@ namespace PereSkyroom
 			_hud = new CanvasLayer { Name = "HUD", Layer = 900 };
 			AddChild(_hud);
 
-			var help = NewLabel("WASD — move   SPACE — jump/up   CTRL — down\nF — flight   B — 2-color blue-noise   C — side cameras   V — panoramic FOV\nF3 — FPS   H — weapon   L — labels   LMB — shoot   ESC — cursor", 18);
+			var help = NewLabel("WASD — move   SPACE — jump/up   CTRL — down\nF — flight   B — 2-color blue-noise   G — accent object dither\nC — side cameras   V — panoramic FOV   F3 — FPS   H — weapon   L — labels\nLMB — shoot   ESC — cursor", 18);
             help.RectPosition = new Vector2(24, 20);
 			_hud.AddChild(help);
 
@@ -302,6 +302,11 @@ namespace PereSkyroom
 		public void ShowPanoramicFovMessage(bool enabled, float targetFov)
 		{
 			ShowMessage(enabled ? "PANORAMIC FOV " + Mathf.Round(targetFov) + "°" : "NORMAL FOV");
+		}
+
+		public void ShowAccentDitherMessage(bool enabled)
+		{
+			ShowMessage(enabled ? "ACCENT OBJECT DITHER ENABLED" : "ACCENT OBJECT DITHER DISABLED");
 		}
 
 		public void SetSideCameraMode(bool enabled)

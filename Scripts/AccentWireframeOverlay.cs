@@ -17,6 +17,7 @@ namespace PereSkyroom
 		public SideCameraMode SideCameraMode;
 		public PanoramicFovMode PanoramicFovMode;
 		public BlueNoiseDither Dither;
+		public AccentObjectDitherMode AccentDitherMode;
 		public float LineWidthPixels = 3.0f;
 		public Color AccentColor = new Color(0.0f, 1.0f, 0.0f, 1.0f);
 		public int DrawPassCount { get; private set; }
@@ -40,7 +41,8 @@ namespace PereSkyroom
 
 		public override void _Process(float delta)
 		{
-			bool shouldDraw = Dither != null && IsInstanceValid(Dither) && Dither.Enabled;
+			bool accentDitherActive = AccentDitherMode != null && AccentDitherMode.Enabled;
+			bool shouldDraw = Dither != null && IsInstanceValid(Dither) && Dither.Enabled && !accentDitherActive;
 			_canvas.Visible = shouldDraw;
 			if (shouldDraw)
 				_canvas.Update();

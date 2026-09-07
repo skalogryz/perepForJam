@@ -16,7 +16,8 @@ namespace PereSkyroom
 		public float PanoramicFovDegrees = 270.0f;
 		public float PanoramicFovTransitionDurationSeconds = 0.5f;
 		public float AccentWireframeWidthPixels = 3.0f;
-		[Export] public Color AccentWireframeColor = new Color(0.0f, 1.0f, 0.0f, 1.0f);
+		public Color AccentWireframeColor = new Color(0.0f, 1.0f, 0.0f, 1.0f);
+		public bool AccentObjectDitherEnabledByDefault = false;
 
 		private readonly Color _floorColor = new Color(0.16f, 0.19f, 0.26f);
 		private readonly Color _wallColor = new Color(0.10f, 0.13f, 0.20f);
@@ -32,7 +33,10 @@ namespace PereSkyroom
 			SideCameraMode sideCameraMode = BuildSideCameraMode(player);
 			PanoramicFovMode panoramicFovMode = BuildPanoramicFovMode(player);
 			BlueNoiseDither dither = BuildDitherPostProcess(player);
-			AccentWireframeOverlay wireframe = BuildAccentWireframe(targets, player, sideCameraMode, panoramicFovMode, dither);
+			AccentObjectDitherMode accentDither = BuildAccentObjectDither(
+				targets, player, sideCameraMode, panoramicFovMode, dither);
+			AccentWireframeOverlay wireframe = BuildAccentWireframe(
+				targets, player, sideCameraMode, panoramicFovMode, dither, accentDither);
 
 			foreach (string argument in OS.GetCmdlineArgs())
 			{
@@ -41,7 +45,7 @@ namespace PereSkyroom
 					sideCameraMode.SetEnabled(true);
 					panoramicFovMode.SetEnabled(true);
 					dither.SetEnabled(true);
-					RunSmokeTest(wireframe);
+					RunSmokeTest(wireframe, accentDither);
 					break;
 				}
 			}
@@ -169,7 +173,8 @@ namespace PereSkyroom
 			PlayerController player,
 			SideCameraMode sideCameraMode,
 			PanoramicFovMode panoramicFovMode,
-			BlueNoiseDither dither)
+			BlueNoiseDither dither,
+			AccentObjectDitherMode accentDither)
 		{
 			var overlay = new AccentWireframeOverlay
 			{
@@ -179,6 +184,7 @@ namespace PereSkyroom
 				SideCameraMode = sideCameraMode,
 				PanoramicFovMode = panoramicFovMode,
 				Dither = dither,
+				AccentDitherMode = accentDither,
 				LineWidthPixels = AccentWireframeWidthPixels,
 				AccentColor = AccentWireframeColor
 			};
@@ -186,12 +192,44 @@ namespace PereSkyroom
 			return overlay;
 		}
 
-		private async void RunSmokeTest(AccentWireframeOverlay wireframe)
+		private AccentObjectDitherMode BuildAccentObjectDither(
+			List<ShootTarget> targets,
+			PlayerController player,
+			SideCameraMode sideCameraMode,
+			PanoramicFovMode panoramicFovMode,
+			BlueNoiseDither dither)
 		{
-			await ToSignal(GetTree().CreateTimer(0.7f), "timeout");
+			var mode = new AccentObjectDitherMode
+			{
+				Name = "AccentObjectDitherMode",
+				Targets = targets,
+				Player = player,
+				SideCameraMode = sideCameraMode,
+				PanoramicFovMode = panoramicFovMode,
+				Dither = dither,
+				AccentColor = AccentWireframeColor,
+				EnabledByDefault = AccentObjectDitherEnabledByDefault
+			};
+			AddChild(mode);
+			return mode;
+		}
+
+		private async void RunSmokeTest(
+			AccentWireframeOverlay wireframe,
+			AccentObjectDitherMode accentDither)
+		{
+			await ToSignal(GetTree().CreateTimer(0.35f), "timeout");
 			if (wireframe.DrawPassCount <= 0)
 			{
 				GD.PushError("Accent wireframe did not complete a draw pass.");
+				GetTree().Quit(1);
+				return;
+			}
+			accentDither.SetEnabled(true);
+			await ToSignal(GetTree().CreateTimer(0.35f), "timeout");
+			if (accentDither.DrawPassCount <= 0)
+			{
+				GD.PushError("Accent object dithering did not complete a mask draw pass.");
 				GetTree().Quit(1);
 				return;
 			}
