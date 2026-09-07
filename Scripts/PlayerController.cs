@@ -210,7 +210,7 @@ namespace PereSkyroom
 			_fpsLabel = NewLabel("FPS: --", 20);
 			_fpsLabel.AnchorLeft = 1.0f;
 			_fpsLabel.AnchorRight = 1.0f;
-			_fpsLabel.RectPosition = new Vector2(-190, 20);
+			_fpsLabel.RectPosition = new Vector2(-230, 20);
 			_fpsLabel.RectSize = new Vector2(160, 32);
 			_fpsLabel.Align = Label.AlignEnum.Right;
 			_fpsLabel.Visible = false;
