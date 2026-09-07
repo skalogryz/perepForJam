@@ -10,6 +10,7 @@ DitherEnabledByDefault = true
 WeaponVisibleByDefault = false
 HudLabelsVisibleByDefault = false
 FpsVisibleByDefault = true
+SpeedBoostJumpMultiplier = 1.2
 AccentWireframeColor = Color( 0.682353, 1, 0, 1 )
 
 [node name="HUD" type="CanvasLayer" parent="."]
@@ -25,7 +26,7 @@ custom_colors/font_color = Color( 0.9, 0.96, 1, 1 )
 custom_colors/font_color_shadow = Color( 0, 0, 0, 0.85 )
 custom_constants/shadow_offset_x = 2
 custom_constants/shadow_offset_y = 2
-text = "WASD — move   SPACE — jump/up   CTRL — down   TAB — speed x3.5
+text = "WASD — move   SPACE — jump/up   CTRL — down   TAB — speed boost
 F — flight   B — 2-color blue-noise   I — invert palette   R — wireframe   G — accent object dither
 C — side cameras   V — panoramic FOV   F2 — reset level   F3 — FPS   H — weapon   L — labels
 LMB — shoot   ESC — cursor"

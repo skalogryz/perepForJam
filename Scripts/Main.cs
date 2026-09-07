@@ -15,6 +15,8 @@ namespace PereSkyroom
 		[Export] public bool WeaponVisibleByDefault = true;
 		[Export] public bool HudLabelsVisibleByDefault = true;
 		[Export] public bool FpsVisibleByDefault = false;
+		[Export] public float SpeedBoostMovementMultiplier = 3.5f;
+		[Export] public float SpeedBoostJumpMultiplier = 1.0f;
 		// Change this value in code to configure both side-camera yaw offsets.
 		public float SideCameraAngleDegrees = 90.0f;
 		public bool SmoothSideCameraTransitionEnabled = true;
@@ -218,7 +220,12 @@ namespace PereSkyroom
 
 		private PlayerController BuildPlayer()
 		{
-			var player = new PlayerController { Name = "Player" };
+			var player = new PlayerController
+			{
+				Name = "Player",
+				SpeedBoostMovementMultiplier = SpeedBoostMovementMultiplier,
+				SpeedBoostJumpMultiplier = SpeedBoostJumpMultiplier
+			};
 			AddChild(player);
 			player.Translation = new Vector3(0, 1.2f, 8.0f);
 			return player;

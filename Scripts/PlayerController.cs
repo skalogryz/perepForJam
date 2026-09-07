@@ -9,10 +9,12 @@ namespace PereSkyroom
 
         private const float WalkSpeed = 7.0f;
         private const float FlySpeed = 10.0f;
-		private const float SpeedBoostMultiplier = 3.5f;
         private const float JumpSpeed = 8.2f;
         private const float Gravity = 22.0f;
         private const float MouseSensitivity = 0.10f;
+
+		public float SpeedBoostMovementMultiplier = 3.5f;
+		public float SpeedBoostJumpMultiplier = 1.0f;
 
         private Spatial _head;
 		private Camera _camera;
@@ -96,7 +98,7 @@ namespace PereSkyroom
 			if (Input.IsActionJustPressed("toggle_speed_boost"))
 			{
 				_speedBoostEnabled = !_speedBoostEnabled;
-				ShowMessage(_speedBoostEnabled ? "SPEED x3.5 ENABLED" : "NORMAL SPEED");
+				ShowMessage(_speedBoostEnabled ? "SPEED BOOST ENABLED" : "NORMAL SPEED");
 			}
 
             if (Input.IsActionJustPressed("toggle_flight"))
@@ -120,7 +122,7 @@ namespace PereSkyroom
                 input = input.Normalized();
 
             Vector3 wishDirection = (GlobalTransform.basis.x * input.x + GlobalTransform.basis.z * input.y).Normalized();
-			float speedMultiplier = _speedBoostEnabled ? SpeedBoostMultiplier : 1.0f;
+			float speedMultiplier = _speedBoostEnabled ? SpeedBoostMovementMultiplier : 1.0f;
 			float speed = (_flightMode ? FlySpeed : WalkSpeed) * speedMultiplier;
             _velocity.x = wishDirection.x * speed;
             _velocity.z = wishDirection.z * speed;
@@ -132,9 +134,12 @@ namespace PereSkyroom
                 _velocity = MoveAndSlide(_velocity, Vector3.Up, false, 4, Mathf.Deg2Rad(55.0f));
             }
             else
-            {
-                if (IsOnFloor() && Input.IsActionJustPressed("jump_or_up"))
-                    _velocity.y = JumpSpeed;
+			{
+				if (IsOnFloor() && Input.IsActionJustPressed("jump_or_up"))
+				{
+					float jumpMultiplier = _speedBoostEnabled ? SpeedBoostJumpMultiplier : 1.0f;
+					_velocity.y = JumpSpeed * jumpMultiplier;
+				}
                 else
                     _velocity.y -= Gravity * delta;
                 _velocity = MoveAndSlide(_velocity, Vector3.Up, true, 4, Mathf.Deg2Rad(55.0f));
