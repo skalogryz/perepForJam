@@ -121,8 +121,11 @@ namespace PereSkyroom
 
 			if (Input.IsActionJustPressed("toggle_hud_labels"))
 			{
+				#if GODOT_EXPORT
 				SetHudLabelsVisible(false);
-				//SetHudLabelsVisible(!HudLabelsVisible);
+				#else
+				SetHudLabelsVisible(!HudLabelsVisible);
+				#endif
 			}
 
             Vector2 input = new Vector2(

@@ -1,19 +1,30 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26124.0
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.36631.11
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PereSkyroom", "PereSkyroom.csproj", "{772ACACF-1F7A-447B-8FC6-60D43AF4FC01}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PereSkyroom", "PereSkyroom.csproj", "{772ACACF-1F7A-447B-8FC6-60D43AF4FC01}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
+		ExportDebug|Any CPU = ExportDebug|Any CPU
+		ExportRelease|Any CPU = ExportRelease|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{772ACACF-1F7A-447B-8FC6-60D43AF4FC01}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{772ACACF-1F7A-447B-8FC6-60D43AF4FC01}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{772ACACF-1F7A-447B-8FC6-60D43AF4FC01}.ExportDebug|Any CPU.ActiveCfg = ExportDebug|Any CPU
+		{772ACACF-1F7A-447B-8FC6-60D43AF4FC01}.ExportDebug|Any CPU.Build.0 = ExportDebug|Any CPU
+		{772ACACF-1F7A-447B-8FC6-60D43AF4FC01}.ExportRelease|Any CPU.ActiveCfg = ExportRelease|Any CPU
+		{772ACACF-1F7A-447B-8FC6-60D43AF4FC01}.ExportRelease|Any CPU.Build.0 = ExportRelease|Any CPU
 		{772ACACF-1F7A-447B-8FC6-60D43AF4FC01}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{772ACACF-1F7A-447B-8FC6-60D43AF4FC01}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {DCCAE446-488F-4E00-B7D6-3D5AACD2F479}
+	EndGlobalSection
 EndGlobal
-
