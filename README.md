@@ -51,6 +51,10 @@ wireframe и accent object dithering. При сбросе уровня чере�
 
 Цвета постобработки настраиваются у корневого узла `Main` в Inspector через свойства
 `Dither Dark Color` и `Dither Light Color`.
+Noise-текстуру можно передать через свойство `Main.DitherNoiseTexture` или напрямую через
+`BlueNoiseDither.NoiseTexture`. Допускается установка до запуска узла и во время работы.
+Если свойству присвоен `null`, используется внутренняя детерминированная blue-noise текстура
+`64x64`. Внешняя текстура может иметь другой размер; он автоматически передаётся шейдерам.
 Если зелёная компонента исходного пикселя превышает `Dither Green Accent Threshold`
 (по умолчанию `0.5`), dithering использует `AccentWireframeColor` вместо light color.
 Для остальных пикселей алгоритм остаётся обычным двухцветным blue-noise dithering.

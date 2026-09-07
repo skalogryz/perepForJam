@@ -12,6 +12,7 @@ shader_type canvas_item;
 render_mode unshaded;
 
 uniform sampler2D blue_noise;
+uniform vec2 blue_noise_size = vec2(64.0, 64.0);
 uniform vec4 dark_color : hint_color;
 uniform vec4 regular_light_color : hint_color;
 uniform vec4 accent_color : hint_color;
@@ -31,7 +32,7 @@ void fragment() {
 		} else {
 			float luminance = dot(screen.rgb, vec3(0.2126, 0.7152, 0.0722));
 			vec2 screen_pixel = floor(SCREEN_UV / SCREEN_PIXEL_SIZE);
-			vec2 noise_uv = (mod(screen_pixel, vec2(64.0)) + vec2(0.5)) / 64.0;
+			vec2 noise_uv = (mod(screen_pixel, blue_noise_size) + vec2(0.5)) / blue_noise_size;
 			float threshold = texture(blue_noise, noise_uv).r;
 			result = luminance >= threshold ? accent_color.rgb : dark_color.rgb;
 		}
@@ -125,6 +126,17 @@ void fragment() {
 				Player.ShowAccentDitherMessage(enabled);
 		}
 
+		public void SetBlueNoiseTexture(Texture texture)
+		{
+			if (_compositeMaterial == null || texture == null)
+				return;
+			Vector2 size = texture.GetSize();
+			_compositeMaterial.SetShaderParam("blue_noise", texture);
+			_compositeMaterial.SetShaderParam(
+				"blue_noise_size",
+				new Vector2(Mathf.Max(1.0f, size.x), Mathf.Max(1.0f, size.y)));
+		}
+
 		private Viewport CreateMaskViewport(string name, World world, out Camera camera)
 		{
 			var viewport = new Viewport
@@ -186,7 +198,7 @@ void fragment() {
 		private void BuildCompositeMaterial()
 		{
 			_compositeMaterial = new ShaderMaterial { Shader = new Shader { Code = CompositeShader } };
-			_compositeMaterial.SetShaderParam("blue_noise", Dither.BlueNoiseTexture);
+			SetBlueNoiseTexture(Dither.BlueNoiseTexture);
 			_compositeMaterial.SetShaderParam("dark_color", Dither.EffectiveDarkColor);
 			_compositeMaterial.SetShaderParam("regular_light_color", Dither.EffectiveLightColor);
 			_compositeMaterial.SetShaderParam("accent_color", AccentColor);

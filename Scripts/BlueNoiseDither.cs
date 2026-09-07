@@ -11,6 +11,7 @@ shader_type canvas_item;
 render_mode unshaded;
 
 uniform sampler2D blue_noise;
+uniform vec2 blue_noise_size = vec2(64.0, 64.0);
 uniform vec4 dark_color : hint_color;
 uniform vec4 light_color : hint_color;
 uniform vec4 accent_color : hint_color;
@@ -20,7 +21,7 @@ void fragment() {
 	vec3 source = texture(SCREEN_TEXTURE, SCREEN_UV).rgb;
 	float luminance = dot(source, vec3(0.2126, 0.7152, 0.0722));
 	vec2 screen_pixel = floor(SCREEN_UV / SCREEN_PIXEL_SIZE);
-	vec2 noise_uv = (mod(screen_pixel, vec2(64.0)) + vec2(0.5)) / 64.0;
+	vec2 noise_uv = (mod(screen_pixel, blue_noise_size) + vec2(0.5)) / blue_noise_size;
 	float noise_threshold = texture(blue_noise, noise_uv).r;
 
 	// vec4 selected_light_color = source.g > green_threshold ? accent_color : light_color;
@@ -40,21 +41,31 @@ void fragment() {
 
 		private ColorRect _overlay;
 		private ShaderMaterial _material;
-		private ImageTexture _blueNoiseTexture;
+		private Texture _externalNoiseTexture;
+		private ImageTexture _generatedNoiseTexture;
+		private Texture _activeNoiseTexture;
 		private bool _enabled;
 		private bool _paletteInverted;
 		public bool Enabled { get { return _enabled; } }
 		public bool PaletteInverted { get { return _paletteInverted; } }
 		public Color EffectiveDarkColor { get { return _paletteInverted ? LightColor : DarkColor; } }
 		public Color EffectiveLightColor { get { return _paletteInverted ? DarkColor : LightColor; } }
-		public Texture BlueNoiseTexture { get { return _blueNoiseTexture; } }
+		public Texture NoiseTexture
+		{
+			get { return _externalNoiseTexture; }
+			set
+			{
+				_externalNoiseTexture = value;
+				ApplyNoiseTexture();
+			}
+		}
+		public Texture BlueNoiseTexture { get { return _activeNoiseTexture; } }
 
 		public override void _Ready()
 		{
 			Layer = 1000;
 			_material = new ShaderMaterial { Shader = new Shader { Code = DitherShader } };
-			_blueNoiseTexture = CreateBlueNoiseTexture();
-			_material.SetShaderParam("blue_noise", _blueNoiseTexture);
+			ApplyNoiseTexture();
 			_material.SetShaderParam("accent_color", AccentColor);
 			_material.SetShaderParam("green_threshold", Mathf.Clamp(GreenAccentThreshold, 0.0f, 1.0f));
 			_paletteInverted = InvertPaletteByDefault;
@@ -112,6 +123,29 @@ void fragment() {
 				return;
 			_material.SetShaderParam("dark_color", EffectiveDarkColor);
 			_material.SetShaderParam("light_color", EffectiveLightColor);
+		}
+
+		private void ApplyNoiseTexture()
+		{
+			if (_externalNoiseTexture == null && _generatedNoiseTexture == null)
+				_generatedNoiseTexture = CreateBlueNoiseTexture();
+
+			_activeNoiseTexture = _externalNoiseTexture ?? _generatedNoiseTexture;
+			if (_material != null)
+			{
+				_material.SetShaderParam("blue_noise", _activeNoiseTexture);
+				_material.SetShaderParam("blue_noise_size", GetNoiseTextureSize(_activeNoiseTexture));
+			}
+			if (AccentDitherMode != null && IsInstanceValid(AccentDitherMode))
+				AccentDitherMode.SetBlueNoiseTexture(_activeNoiseTexture);
+		}
+
+		private Vector2 GetNoiseTextureSize(Texture texture)
+		{
+			if (texture == null)
+				return new Vector2(NoiseSize, NoiseSize);
+			Vector2 size = texture.GetSize();
+			return new Vector2(Mathf.Max(1.0f, size.x), Mathf.Max(1.0f, size.y));
 		}
 
 		private ImageTexture CreateBlueNoiseTexture()

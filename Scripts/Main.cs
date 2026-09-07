@@ -30,6 +30,19 @@ namespace PereSkyroom
 		[Export] public bool AccentWireframeEnabledByDefault = false;
 		[Export] public bool AccentObjectDitherEnabledByDefault = false;
 
+		private Texture _ditherNoiseTexture;
+		[Export]
+		public Texture DitherNoiseTexture
+		{
+			get { return _ditherNoiseTexture; }
+			set
+			{
+				_ditherNoiseTexture = value;
+				if (_dither != null && IsInstanceValid(_dither))
+					_dither.NoiseTexture = value;
+			}
+		}
+
 		private readonly Color _floorColor = new Color(0.16f, 0.19f, 0.26f);
 		private readonly Color _wallColor = new Color(0.10f, 0.13f, 0.20f);
 		private readonly Color _platformColor = new Color(0.18f, 0.55f, 0.72f);
@@ -241,6 +254,7 @@ namespace PereSkyroom
 				AccentColor = AccentWireframeColor,
 				GreenAccentThreshold = DitherGreenAccentThreshold,
 				InvertPaletteByDefault = DitherPaletteInvertedByDefault,
+				NoiseTexture = DitherNoiseTexture,
 				Player = player
 			};
 			AddChild(dither);
