@@ -8,7 +8,13 @@ namespace PereSkyroom
 		[Export] public Color DitherDarkColor = new Color(0.035f, 0.045f, 0.075f, 1.0f);
 		[Export] public Color DitherLightColor = new Color(0.95f, 0.82f, 0.36f, 1.0f);
 		[Export] public float DitherGreenAccentThreshold = 0.5f;
-		public bool DitherPaletteInvertedByDefault = false;
+		[Export] public bool DitherEnabledByDefault = false;
+		[Export] public bool DitherPaletteInvertedByDefault = false;
+		[Export] public bool SideCamerasEnabledByDefault = false;
+		[Export] public bool PanoramicFovEnabledByDefault = false;
+		[Export] public bool WeaponVisibleByDefault = true;
+		[Export] public bool HudLabelsVisibleByDefault = true;
+		[Export] public bool FpsVisibleByDefault = false;
 		// Change this value in code to configure both side-camera yaw offsets.
 		public float SideCameraAngleDegrees = 90.0f;
 		public bool SmoothSideCameraTransitionEnabled = true;
@@ -19,39 +25,126 @@ namespace PereSkyroom
 		public float PanoramicFovTransitionDurationSeconds = 0.5f;
 		public float AccentWireframeWidthPixels = 3.0f;
 		[Export] public Color AccentWireframeColor = new Color(0.0f, 1.0f, 0.0f, 1.0f);
-		public bool AccentWireframeEnabledByDefault = false;
-		public bool AccentObjectDitherEnabledByDefault = false;
+		[Export] public bool AccentWireframeEnabledByDefault = false;
+		[Export] public bool AccentObjectDitherEnabledByDefault = false;
 
 		private readonly Color _floorColor = new Color(0.16f, 0.19f, 0.26f);
 		private readonly Color _wallColor = new Color(0.10f, 0.13f, 0.20f);
 		private readonly Color _platformColor = new Color(0.18f, 0.55f, 0.72f);
+		private static DisplayModeState _pendingDisplayModeState;
+		private static bool _verifyDisplayModesAfterReset;
+
+		private PlayerController _player;
+		private SideCameraMode _sideCameraMode;
+		private PanoramicFovMode _panoramicFovMode;
+		private BlueNoiseDither _dither;
+		private AccentObjectDitherMode _accentDither;
+		private AccentWireframeOverlay _wireframe;
 
 		public override void _Ready()
 		{
+			DisplayModeState initialDisplayModes = TakeInitialDisplayModeState();
 			BuildEnvironment();
 			BuildRoom();
 			BuildPlatforms();
 			List<ShootTarget> targets = BuildTargets();
-			PlayerController player = BuildPlayer();
-			SideCameraMode sideCameraMode = BuildSideCameraMode(player);
-			PanoramicFovMode panoramicFovMode = BuildPanoramicFovMode(player);
-			BlueNoiseDither dither = BuildDitherPostProcess(player);
-			AccentObjectDitherMode accentDither = BuildAccentObjectDither(
-				targets, player, sideCameraMode, panoramicFovMode, dither);
-			AccentWireframeOverlay wireframe = BuildAccentWireframe(
-				targets, player, sideCameraMode, panoramicFovMode, dither, accentDither);
+			_player = BuildPlayer();
+			_sideCameraMode = BuildSideCameraMode(_player);
+			_panoramicFovMode = BuildPanoramicFovMode(_player);
+			_dither = BuildDitherPostProcess(_player);
+			_accentDither = BuildAccentObjectDither(
+				targets, _player, _sideCameraMode, _panoramicFovMode, _dither);
+			_wireframe = BuildAccentWireframe(
+				targets, _player, _sideCameraMode, _panoramicFovMode, _dither, _accentDither);
+			ApplyDisplayModeState(initialDisplayModes);
 
 			foreach (string argument in OS.GetCmdlineArgs())
 			{
 				if (argument == "--smoke-test" || argument == "--no-window")
 				{
-					sideCameraMode.SetEnabled(true);
-					panoramicFovMode.SetEnabled(true);
-					dither.SetEnabled(true);
-					RunSmokeTest(wireframe, accentDither, dither);
+					if (_verifyDisplayModesAfterReset)
+					{
+						VerifyDisplayModesAfterReset();
+						return;
+					}
+					_sideCameraMode.SetEnabled(true);
+					_panoramicFovMode.SetEnabled(true);
+					_dither.SetEnabled(true);
+					RunSmokeTest(_wireframe, _accentDither, _dither);
 					break;
 				}
 			}
+		}
+
+		public void ResetLevel()
+		{
+			_pendingDisplayModeState = CaptureDisplayModeState();
+			GetTree().ReloadCurrentScene();
+		}
+
+		private DisplayModeState TakeInitialDisplayModeState()
+		{
+			if (_pendingDisplayModeState != null)
+			{
+				DisplayModeState state = _pendingDisplayModeState;
+				_pendingDisplayModeState = null;
+				return state;
+			}
+
+			return new DisplayModeState
+			{
+				DitherEnabled = DitherEnabledByDefault,
+				DitherPaletteInverted = DitherPaletteInvertedByDefault,
+				SideCamerasEnabled = SideCamerasEnabledByDefault,
+				PanoramicFovEnabled = PanoramicFovEnabledByDefault,
+				WeaponVisible = WeaponVisibleByDefault,
+				HudLabelsVisible = HudLabelsVisibleByDefault,
+				FpsVisible = FpsVisibleByDefault,
+				AccentWireframeEnabled = AccentWireframeEnabledByDefault,
+				AccentObjectDitherEnabled = AccentObjectDitherEnabledByDefault
+			};
+		}
+
+		private DisplayModeState CaptureDisplayModeState()
+		{
+			return new DisplayModeState
+			{
+				DitherEnabled = _dither.Enabled,
+				DitherPaletteInverted = _dither.PaletteInverted,
+				SideCamerasEnabled = _sideCameraMode.IsEnabled(),
+				PanoramicFovEnabled = _panoramicFovMode.IsEnabled(),
+				WeaponVisible = _player.WeaponVisible,
+				HudLabelsVisible = _player.HudLabelsVisible,
+				FpsVisible = _player.FpsVisible,
+				AccentWireframeEnabled = _wireframe.Enabled,
+				AccentObjectDitherEnabled = _accentDither.Enabled
+			};
+		}
+
+		private void ApplyDisplayModeState(DisplayModeState state)
+		{
+			_player.SetWeaponVisible(state.WeaponVisible);
+			_player.SetHudLabelsVisible(state.HudLabelsVisible);
+			_player.SetFpsVisible(state.FpsVisible);
+			_dither.SetPaletteInverted(state.DitherPaletteInverted, false);
+			_dither.SetEnabled(state.DitherEnabled, false);
+			_sideCameraMode.SetEnabled(state.SideCamerasEnabled, false);
+			_panoramicFovMode.SetEnabled(state.PanoramicFovEnabled, false);
+			_wireframe.SetEnabled(state.AccentWireframeEnabled, false);
+			_accentDither.SetEnabled(state.AccentObjectDitherEnabled, false);
+		}
+
+		private sealed class DisplayModeState
+		{
+			public bool DitherEnabled;
+			public bool DitherPaletteInverted;
+			public bool SideCamerasEnabled;
+			public bool PanoramicFovEnabled;
+			public bool WeaponVisible;
+			public bool HudLabelsVisible;
+			public bool FpsVisible;
+			public bool AccentWireframeEnabled;
+			public bool AccentObjectDitherEnabled;
 		}
 
 		private void BuildEnvironment()
@@ -264,6 +357,39 @@ namespace PereSkyroom
 				GetTree().Quit(1);
 				return;
 			}
+
+			_dither.SetEnabled(true, false);
+			_dither.SetPaletteInverted(true, false);
+			_sideCameraMode.SetEnabled(true, false);
+			_panoramicFovMode.SetEnabled(true, false);
+			_player.SetWeaponVisible(false);
+			_player.SetHudLabelsVisible(false);
+			_player.SetFpsVisible(true);
+			_wireframe.SetEnabled(true, false);
+			_accentDither.SetEnabled(true, false);
+			_verifyDisplayModesAfterReset = true;
+			ResetLevel();
+		}
+
+		private void VerifyDisplayModesAfterReset()
+		{
+			_verifyDisplayModesAfterReset = false;
+			bool restored = _dither.Enabled
+				&& _dither.PaletteInverted
+				&& _sideCameraMode.IsEnabled()
+				&& _panoramicFovMode.IsEnabled()
+				&& !_player.WeaponVisible
+				&& !_player.HudLabelsVisible
+				&& _player.FpsVisible
+				&& _wireframe.Enabled
+				&& _accentDither.Enabled;
+			if (!restored)
+			{
+				GD.PushError("Display modes were not preserved after resetting the level.");
+				GetTree().Quit(1);
+				return;
+			}
+
 			GD.Print("PERE_DITHER_SMOKE_TEST_OK");
 			GetTree().Quit();
 		}

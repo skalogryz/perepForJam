@@ -101,7 +101,7 @@ void fragment() {
 			DrawPassCount++;
 		}
 
-		public void SetEnabled(bool enabled)
+		public void SetEnabled(bool enabled, bool notifyPlayer = true)
 		{
 			if (enabled && (Dither == null || !IsInstanceValid(Dither) || !Dither.Enabled))
 				return;
@@ -121,7 +121,7 @@ void fragment() {
 				UpdateProxyTransforms();
 				UpdateLayoutAndCameras();
 			}
-			if (Player != null && IsInstanceValid(Player))
+			if (notifyPlayer && Player != null && IsInstanceValid(Player))
 				Player.ShowAccentDitherMessage(enabled);
 		}
 

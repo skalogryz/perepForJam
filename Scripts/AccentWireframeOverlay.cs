@@ -56,12 +56,12 @@ namespace PereSkyroom
 				_canvas.Update();
 		}
 
-		public void SetEnabled(bool enabled)
+		public void SetEnabled(bool enabled, bool notifyPlayer = true)
 		{
 			Enabled = enabled;
 			if (_canvas != null && IsInstanceValid(_canvas) && !enabled)
 				_canvas.Visible = false;
-			if (Player != null && IsInstanceValid(Player))
+			if (notifyPlayer && Player != null && IsInstanceValid(Player))
 				Player.ShowAccentWireframeMessage(enabled);
 		}
 

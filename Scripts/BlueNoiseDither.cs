@@ -80,15 +80,15 @@ void fragment() {
 				SetPaletteInverted(!_paletteInverted);
 		}
 
-		public void SetEnabled(bool enabled)
+		public void SetEnabled(bool enabled, bool notifyPlayer = true)
 		{
 			_enabled = enabled;
 			_overlay.Visible = _enabled;
 			if (!_enabled && AccentDitherMode != null && IsInstanceValid(AccentDitherMode)
 				&& AccentDitherMode.Enabled)
-				AccentDitherMode.SetEnabled(false);
+				AccentDitherMode.SetEnabled(false, notifyPlayer);
 			if (Player != null && IsInstanceValid(Player))
-				Player.SetDitherMode(_enabled);
+				Player.SetDitherMode(_enabled, notifyPlayer);
 		}
 
 		public void SetPalette(Color darkColor, Color lightColor)
@@ -98,12 +98,12 @@ void fragment() {
 			ApplyEffectivePalette();
 		}
 
-		public void SetPaletteInverted(bool inverted)
+		public void SetPaletteInverted(bool inverted, bool notifyPlayer = true)
 		{
 			_paletteInverted = inverted;
 			ApplyEffectivePalette();
 			if (Player != null && IsInstanceValid(Player))
-				Player.SetDitherPaletteInverted(_paletteInverted);
+				Player.SetDitherPaletteInverted(_paletteInverted, notifyPlayer);
 		}
 
 		private void ApplyEffectivePalette()

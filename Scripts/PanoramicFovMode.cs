@@ -48,7 +48,7 @@ namespace PereSkyroom
 			UpdatePanorama();
 		}
 
-		public void SetEnabled(bool enabled)
+		public void SetEnabled(bool enabled, bool notifyPlayer = true)
 		{
 			_targetEnabled = enabled;
 			if (enabled)
@@ -57,8 +57,13 @@ namespace PereSkyroom
 				ResizeViewports();
 				UpdatePanorama();
 			}
-			if (Player != null && IsInstanceValid(Player))
+			if (notifyPlayer && Player != null && IsInstanceValid(Player))
 				Player.ShowPanoramicFovMessage(enabled, TargetFovDegrees);
+		}
+
+		public bool IsEnabled()
+		{
+			return _targetEnabled;
 		}
 
 		public bool IsRenderingActive()

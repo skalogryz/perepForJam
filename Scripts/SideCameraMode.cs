@@ -47,7 +47,7 @@ namespace PereSkyroom
 			UpdateCameraTransforms();
 		}
 
-		public void SetEnabled(bool enabled)
+		public void SetEnabled(bool enabled, bool notifyPlayer = true)
 		{
 			_enabled = enabled;
 			_transitionElapsed = enabled && SmoothTransitionEnabled ? 0.0f : Mathf.Max(TransitionDurationSeconds, 0.001f);
@@ -62,7 +62,7 @@ namespace PereSkyroom
 				UpdateCameraTransforms();
 			}
 			if (Player != null && IsInstanceValid(Player))
-				Player.SetSideCameraMode(enabled);
+				Player.SetSideCameraMode(enabled, notifyPlayer);
 		}
 
 		public bool IsEnabled()

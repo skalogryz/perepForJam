@@ -38,6 +38,10 @@ namespace PereSkyroom
 		private bool _fpsVisible;
 		private float _fpsRefreshTimer;
 
+		public bool WeaponVisible { get { return _weaponView != null && _weaponView.Visible; } }
+		public bool HudLabelsVisible { get { return _hud != null && _hud.Visible; } }
+		public bool FpsVisible { get { return _fpsVisible; } }
+
         public override void _Ready()
         {
             BuildBody();
@@ -66,11 +70,7 @@ namespace PereSkyroom
 						: Input.MouseModeEnum.Captured;
 				}
 				else if (key.Scancode == (uint)KeyList.F3)
-				{
-					_fpsVisible = !_fpsVisible;
-					_fpsLabel.Visible = _fpsVisible;
-					_fpsRefreshTimer = 0.0f;
-				}
+					SetFpsVisible(!_fpsVisible);
 			}
 
             var mouseButton = inputEvent as InputEventMouseButton;
@@ -85,7 +85,11 @@ namespace PereSkyroom
         {
 			if (Input.IsActionJustPressed("reset_level"))
 			{
-				GetTree().ReloadCurrentScene();
+				Main main = GetParent() as Main;
+				if (main != null)
+					main.ResetLevel();
+				else
+					GetTree().ReloadCurrentScene();
 				return;
 			}
 
@@ -104,13 +108,10 @@ namespace PereSkyroom
             }
 
 			if (Input.IsActionJustPressed("toggle_weapon_visibility"))
-			{
-				SetWeaponVisible(!_weaponView.Visible);
-				ShowMessage(_weaponView.Visible ? "WEAPON SHOWN" : "WEAPON HIDDEN");
-			}
+				SetWeaponVisible(!WeaponVisible, true);
 
 			if (Input.IsActionJustPressed("toggle_hud_labels"))
-				_hud.Visible = !_hud.Visible;
+				SetHudLabelsVisible(!HudLabelsVisible);
 
             Vector2 input = new Vector2(
                 Input.GetActionStrength("move_right") - Input.GetActionStrength("move_left"),
@@ -265,13 +266,27 @@ namespace PereSkyroom
 				_weaponViewport.Size = screenSize;
 		}
 
-		private void SetWeaponVisible(bool visible)
+		public void SetWeaponVisible(bool visible, bool showMessage = false)
 		{
 			_gun.Visible = visible;
 			_weaponView.Visible = visible;
 			_weaponViewport.RenderTargetUpdateMode = visible
 				? Viewport.UpdateMode.Always
 				: Viewport.UpdateMode.Disabled;
+			if (showMessage)
+				ShowMessage(visible ? "WEAPON SHOWN" : "WEAPON HIDDEN");
+		}
+
+		public void SetHudLabelsVisible(bool visible)
+		{
+			_hud.Visible = visible;
+		}
+
+		public void SetFpsVisible(bool visible)
+		{
+			_fpsVisible = visible;
+			_fpsLabel.Visible = visible;
+			_fpsRefreshTimer = 0.0f;
 		}
 
         private void BindHud()
@@ -328,19 +343,21 @@ namespace PereSkyroom
             _scoreLabel.Text = "TARGETS HIT: " + _score + " / 5";
         }
 
-		public void SetDitherMode(bool enabled)
+		public void SetDitherMode(bool enabled, bool showMessage = true)
 		{
 			_ditherEnabled = enabled;
 			UpdateDitherLabel();
 			_ditherLabel.Modulate = enabled ? new Color(1.0f, 0.86f, 0.42f) : new Color(0.72f, 0.76f, 0.84f);
-			ShowMessage(enabled ? "2-COLOR DITHER ENABLED" : "2-COLOR DITHER DISABLED");
+			if (showMessage)
+				ShowMessage(enabled ? "2-COLOR DITHER ENABLED" : "2-COLOR DITHER DISABLED");
 		}
 
-		public void SetDitherPaletteInverted(bool inverted)
+		public void SetDitherPaletteInverted(bool inverted, bool showMessage = true)
 		{
 			_ditherPaletteInverted = inverted;
 			UpdateDitherLabel();
-			ShowMessage(inverted ? "DITHER PALETTE INVERTED" : "DITHER PALETTE NORMAL");
+			if (showMessage)
+				ShowMessage(inverted ? "DITHER PALETTE INVERTED" : "DITHER PALETTE NORMAL");
 		}
 
 		private void UpdateDitherLabel()
@@ -385,11 +402,12 @@ namespace PereSkyroom
 			ShowMessage(enabled ? "ACCENT WIREFRAME ENABLED" : "ACCENT WIREFRAME DISABLED");
 		}
 
-		public void SetSideCameraMode(bool enabled)
+		public void SetSideCameraMode(bool enabled, bool showMessage = true)
 		{
 			_sideCameraLabel.Text = enabled ? "CAMERAS: SIDE VIEWS" : "CAMERAS: FORWARD";
 			_sideCameraLabel.Modulate = enabled ? new Color(0.48f, 0.9f, 1.0f) : new Color(0.72f, 0.76f, 0.84f);
-			ShowMessage(enabled ? "SIDE CAMERAS ENABLED" : "FORWARD CAMERA ENABLED");
+			if (showMessage)
+				ShowMessage(enabled ? "SIDE CAMERAS ENABLED" : "FORWARD CAMERA ENABLED");
 		}
     }
 }
