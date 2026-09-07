@@ -13,18 +13,27 @@ render_mode unshaded;
 uniform sampler2D blue_noise;
 uniform vec4 dark_color : hint_color;
 uniform vec4 light_color : hint_color;
+uniform vec4 accent_color : hint_color;
+uniform float green_threshold = 0.5;
 
 void fragment() {
 	vec3 source = texture(SCREEN_TEXTURE, SCREEN_UV).rgb;
 	float luminance = dot(source, vec3(0.2126, 0.7152, 0.0722));
 	vec2 screen_pixel = floor(SCREEN_UV / SCREEN_PIXEL_SIZE);
 	vec2 noise_uv = (mod(screen_pixel, vec2(64.0)) + vec2(0.5)) / 64.0;
-	float threshold = texture(blue_noise, noise_uv).r;
-	COLOR = luminance >= threshold ? light_color : dark_color;
+	float noise_threshold = texture(blue_noise, noise_uv).r;
+
+	// vec4 selected_light_color = source.g > green_threshold ? accent_color : light_color;
+	bool is_green = max(source.r, source.b) < source.g * 0.8;
+	vec4 selected_light_color = (is_green) ? accent_color : light_color;
+
+	COLOR = luminance >= noise_threshold ? selected_light_color : dark_color;
 }";
 
 		public Color DarkColor = new Color(0.035f, 0.045f, 0.075f, 1.0f);
 		public Color LightColor = new Color(0.95f, 0.82f, 0.36f, 1.0f);
+		public Color AccentColor = new Color(0.0f, 1.0f, 0.0f, 1.0f);
+		public float GreenAccentThreshold = 0.5f;
 		public bool InvertPaletteByDefault;
 		public PlayerController Player;
 		public AccentObjectDitherMode AccentDitherMode;
@@ -46,6 +55,8 @@ void fragment() {
 			_material = new ShaderMaterial { Shader = new Shader { Code = DitherShader } };
 			_blueNoiseTexture = CreateBlueNoiseTexture();
 			_material.SetShaderParam("blue_noise", _blueNoiseTexture);
+			_material.SetShaderParam("accent_color", AccentColor);
+			_material.SetShaderParam("green_threshold", Mathf.Clamp(GreenAccentThreshold, 0.0f, 1.0f));
 			_paletteInverted = InvertPaletteByDefault;
 			ApplyEffectivePalette();
 

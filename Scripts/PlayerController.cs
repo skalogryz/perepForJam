@@ -9,6 +9,7 @@ namespace PereSkyroom
 
         private const float WalkSpeed = 7.0f;
         private const float FlySpeed = 10.0f;
+		private const float SpeedBoostMultiplier = 3.5f;
         private const float JumpSpeed = 8.2f;
         private const float Gravity = 22.0f;
         private const float MouseSensitivity = 0.10f;
@@ -30,6 +31,7 @@ namespace PereSkyroom
         private Vector3 _velocity = Vector3.Zero;
         private float _pitch;
 		private bool _flightMode;
+		private bool _speedBoostEnabled;
 		private bool _ditherEnabled;
 		private bool _ditherPaletteInverted;
 		private int _score;
@@ -81,6 +83,18 @@ namespace PereSkyroom
 
         public override void _PhysicsProcess(float delta)
         {
+			if (Input.IsActionJustPressed("reset_level"))
+			{
+				GetTree().ReloadCurrentScene();
+				return;
+			}
+
+			if (Input.IsActionJustPressed("toggle_speed_boost"))
+			{
+				_speedBoostEnabled = !_speedBoostEnabled;
+				ShowMessage(_speedBoostEnabled ? "SPEED x3.5 ENABLED" : "NORMAL SPEED");
+			}
+
             if (Input.IsActionJustPressed("toggle_flight"))
             {
                 _flightMode = !_flightMode;
@@ -105,14 +119,15 @@ namespace PereSkyroom
                 input = input.Normalized();
 
             Vector3 wishDirection = (GlobalTransform.basis.x * input.x + GlobalTransform.basis.z * input.y).Normalized();
-            float speed = _flightMode ? FlySpeed : WalkSpeed;
+			float speedMultiplier = _speedBoostEnabled ? SpeedBoostMultiplier : 1.0f;
+			float speed = (_flightMode ? FlySpeed : WalkSpeed) * speedMultiplier;
             _velocity.x = wishDirection.x * speed;
             _velocity.z = wishDirection.z * speed;
 
             if (_flightMode)
             {
                 float vertical = Input.GetActionStrength("jump_or_up") - Input.GetActionStrength("fly_down");
-                _velocity.y = vertical * FlySpeed;
+				_velocity.y = vertical * FlySpeed * speedMultiplier;
                 _velocity = MoveAndSlide(_velocity, Vector3.Up, false, 4, Mathf.Deg2Rad(55.0f));
             }
             else
@@ -363,6 +378,11 @@ namespace PereSkyroom
 		public void ShowAccentDitherMessage(bool enabled)
 		{
 			ShowMessage(enabled ? "ACCENT OBJECT DITHER ENABLED" : "ACCENT OBJECT DITHER DISABLED");
+		}
+
+		public void ShowAccentWireframeMessage(bool enabled)
+		{
+			ShowMessage(enabled ? "ACCENT WIREFRAME ENABLED" : "ACCENT WIREFRAME DISABLED");
 		}
 
 		public void SetSideCameraMode(bool enabled)

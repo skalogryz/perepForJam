@@ -7,6 +7,7 @@ namespace PereSkyroom
 	{
 		[Export] public Color DitherDarkColor = new Color(0.035f, 0.045f, 0.075f, 1.0f);
 		[Export] public Color DitherLightColor = new Color(0.95f, 0.82f, 0.36f, 1.0f);
+		[Export] public float DitherGreenAccentThreshold = 0.5f;
 		public bool DitherPaletteInvertedByDefault = false;
 		// Change this value in code to configure both side-camera yaw offsets.
 		public float SideCameraAngleDegrees = 90.0f;
@@ -18,6 +19,7 @@ namespace PereSkyroom
 		public float PanoramicFovTransitionDurationSeconds = 0.5f;
 		public float AccentWireframeWidthPixels = 3.0f;
 		[Export] public Color AccentWireframeColor = new Color(0.0f, 1.0f, 0.0f, 1.0f);
+		public bool AccentWireframeEnabledByDefault = false;
 		public bool AccentObjectDitherEnabledByDefault = false;
 
 		private readonly Color _floorColor = new Color(0.16f, 0.19f, 0.26f);
@@ -136,6 +138,8 @@ namespace PereSkyroom
 				Name = "BlueNoiseDither",
 				DarkColor = DitherDarkColor,
 				LightColor = DitherLightColor,
+				AccentColor = AccentWireframeColor,
+				GreenAccentThreshold = DitherGreenAccentThreshold,
 				InvertPaletteByDefault = DitherPaletteInvertedByDefault,
 				Player = player
 			};
@@ -187,6 +191,7 @@ namespace PereSkyroom
 				PanoramicFovMode = panoramicFovMode,
 				Dither = dither,
 				AccentDitherMode = accentDither,
+				EnabledByDefault = AccentWireframeEnabledByDefault,
 				LineWidthPixels = AccentWireframeWidthPixels,
 				AccentColor = AccentWireframeColor
 			};
@@ -221,6 +226,14 @@ namespace PereSkyroom
 			AccentObjectDitherMode accentDither,
 			BlueNoiseDither dither)
 		{
+			await ToSignal(GetTree().CreateTimer(0.35f), "timeout");
+			if (wireframe.Enabled)
+			{
+				GD.PushError("Accent wireframe was enabled by default.");
+				GetTree().Quit(1);
+				return;
+			}
+			wireframe.SetEnabled(true);
 			await ToSignal(GetTree().CreateTimer(0.35f), "timeout");
 			if (wireframe.DrawPassCount <= 0)
 			{

@@ -18,15 +18,18 @@ namespace PereSkyroom
 		public PanoramicFovMode PanoramicFovMode;
 		public BlueNoiseDither Dither;
 		public AccentObjectDitherMode AccentDitherMode;
+		public bool EnabledByDefault = false;
 		public float LineWidthPixels = 3.0f;
 		public Color AccentColor = new Color(0.0f, 1.0f, 0.0f, 1.0f);
 		public int DrawPassCount { get; private set; }
+		public bool Enabled { get; private set; }
 
 		private WireframeCanvas _canvas;
 
 		public override void _Ready()
 		{
 			Layer = 1100;
+			Enabled = EnabledByDefault;
 			_canvas = new WireframeCanvas
 			{
 				Name = "TargetWireframes",
@@ -41,11 +44,25 @@ namespace PereSkyroom
 
 		public override void _Process(float delta)
 		{
+			if (Input.IsActionJustPressed("toggle_accent_wireframe"))
+				SetEnabled(!Enabled);
+
 			bool accentDitherActive = AccentDitherMode != null && AccentDitherMode.Enabled;
-			bool shouldDraw = Dither != null && IsInstanceValid(Dither) && Dither.Enabled && !accentDitherActive;
+			bool shouldDraw = Enabled
+				&& Dither != null && IsInstanceValid(Dither) && Dither.Enabled
+				&& !accentDitherActive;
 			_canvas.Visible = shouldDraw;
 			if (shouldDraw)
 				_canvas.Update();
+		}
+
+		public void SetEnabled(bool enabled)
+		{
+			Enabled = enabled;
+			if (_canvas != null && IsInstanceValid(_canvas) && !enabled)
+				_canvas.Visible = false;
+			if (Player != null && IsInstanceValid(Player))
+				Player.ShowAccentWireframeMessage(enabled);
 		}
 
 		private void DrawWireframes()

@@ -15,9 +15,12 @@ namespace PereSkyroom
 
             var material = new SpatialMaterial
             {
-                AlbedoColor = new Color(1.0f, 0.18f, 0.12f),
-                EmissionEnabled = true,
-                Emission = new Color(0.7f, 0.025f, 0.015f),
+                //AlbedoColor = new Color(1.0f, 0.18f, 0.12f),
+                AlbedoColor = new Color(0.18f, 1.0f, 0.12f),
+                //EmissionEnabled = true,
+                EmissionEnabled = false,
+                //Emission = new Color(0.7f, 0.025f, 0.015f),
+                Emission = new Color(0.025f, 0.9f, 0.015f),
                 EmissionEnergy = 1.8f,
                 Metallic = 0.25f,
                 Roughness = 0.32f
