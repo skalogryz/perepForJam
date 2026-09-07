@@ -28,8 +28,10 @@ namespace PereSkyroom
         private Label _scoreLabel;
 		private Label _ditherLabel;
 		private Label _sideCameraLabel;
-        private Label _messageLabel;
+		private Label _messageLabel;
 		private Label _fpsLabel;
+		private CanvasLayer _playerStatsHud;
+		private Label _statsBoostLabel;
         private Vector3 _velocity = Vector3.Zero;
         private float _pitch;
 		private bool _flightMode;
@@ -50,6 +52,7 @@ namespace PereSkyroom
             BindHud();
             Input.MouseMode = Input.MouseModeEnum.Captured;
             UpdateHud();
+			UpdatePlayerStatsHud();
         }
 
         public override void _UnhandledInput(InputEvent inputEvent)
@@ -105,6 +108,7 @@ namespace PereSkyroom
 			if (Input.IsActionJustPressed("toggle_speed_boost"))
 			{
 				_speedBoostEnabled = !_speedBoostEnabled;
+				UpdatePlayerStatsHud();
 				ShowMessage(_speedBoostEnabled ? "SPEED BOOST ENABLED" : "NORMAL SPEED");
 			}
 
@@ -318,7 +322,16 @@ namespace PereSkyroom
 			_messageLabel = _hud.GetNode<Label>("MessageLabel");
 			_fpsLabel = _hud.GetNode<Label>("FpsLabel");
 			_fpsVisible = _fpsLabel.Visible;
+
+			_playerStatsHud = hudOwner.GetNode<CanvasLayer>("PlayerStatsHUD");
+			Node statsPanel = _playerStatsHud.GetNode("StatsPanel");
+			_statsBoostLabel = statsPanel.GetNode<Label>("BoostLabel");
         }
+
+		private void UpdatePlayerStatsHud()
+		{
+			_statsBoostLabel.Text = _speedBoostEnabled ? "BOOST: ON" : "BOOST: OFF";
+		}
 
         private void Shoot()
         {

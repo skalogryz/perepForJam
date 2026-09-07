@@ -124,3 +124,27 @@ custom_colors/font_color_shadow = Color( 0, 0, 0, 0.85 )
 custom_constants/shadow_offset_x = 2
 custom_constants/shadow_offset_y = 2
 text = "+"
+
+[node name="PlayerStatsHUD" type="CanvasLayer" parent="."]
+layer = 1200
+
+[node name="StatsPanel" type="ColorRect" parent="PlayerStatsHUD"]
+anchor_left = 1.0
+anchor_right = 1.0
+margin_left = -170.0
+margin_top = 72.0
+margin_right = -20.0
+margin_bottom = 116.0
+mouse_filter = 2
+color = Color( 0.025, 0.035, 0.06, 0.82 )
+
+[node name="BoostLabel" type="Label" parent="PlayerStatsHUD/StatsPanel"]
+margin_left = 12.0
+margin_top = 10.0
+margin_right = 138.0
+margin_bottom = 32.0
+custom_colors/font_color = Color( 0.682353, 1, 0, 1 )
+custom_colors/font_color_shadow = Color( 0, 0, 0, 0.85 )
+custom_constants/shadow_offset_x = 1
+custom_constants/shadow_offset_y = 1
+text = "BOOST: OFF"
