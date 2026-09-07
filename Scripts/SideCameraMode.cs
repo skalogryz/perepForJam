@@ -92,7 +92,8 @@ namespace PereSkyroom
 				Name = name + "Camera",
 				Current = true,
 				Fov = 78.0f,
-				Far = 200.0f
+				Far = 200.0f,
+				CullMask = PlayerController.SceneCameraCullMask
 			};
 			viewport.AddChild(camera);
 			return viewport;

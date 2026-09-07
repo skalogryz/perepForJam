@@ -4,6 +4,9 @@ namespace PereSkyroom
 {
     public class PlayerController : KinematicBody
     {
+		public const uint WeaponVisualLayer = 1u << 19;
+		public const uint SceneCameraCullMask = uint.MaxValue ^ WeaponVisualLayer;
+
         private const float WalkSpeed = 7.0f;
         private const float FlySpeed = 10.0f;
         private const float JumpSpeed = 8.2f;
@@ -11,8 +14,12 @@ namespace PereSkyroom
         private const float MouseSensitivity = 0.10f;
 
         private Spatial _head;
-        private Camera _camera;
+		private Camera _camera;
 		private MeshInstance _gun;
+		private Viewport _weaponViewport;
+		private Camera _weaponCamera;
+		private CanvasLayer _weaponOverlay;
+		private TextureRect _weaponView;
 		private CanvasLayer _hud;
         private Label _modeLabel;
         private Label _scoreLabel;
@@ -82,8 +89,8 @@ namespace PereSkyroom
 
 			if (Input.IsActionJustPressed("toggle_weapon_visibility"))
 			{
-				_gun.Visible = !_gun.Visible;
-				ShowMessage(_gun.Visible ? "WEAPON SHOWN" : "WEAPON HIDDEN");
+				SetWeaponVisible(!_weaponView.Visible);
+				ShowMessage(_weaponView.Visible ? "WEAPON SHOWN" : "WEAPON HIDDEN");
 			}
 
 			if (Input.IsActionJustPressed("toggle_hud_labels"))
@@ -127,6 +134,8 @@ namespace PereSkyroom
 
 		public override void _Process(float delta)
 		{
+			UpdateWeaponCamera();
+			ResizeWeaponViewport();
 			if (!_fpsVisible)
 				return;
 
@@ -155,24 +164,98 @@ namespace PereSkyroom
 				Current = true,
 				Fov = 78.0f,
 				Far = 200.0f,
-				KeepAspect = Camera.KeepAspectEnum.Width
+				KeepAspect = Camera.KeepAspectEnum.Width,
+				CullMask = SceneCameraCullMask
 			};
             _head.AddChild(_camera);
+			BuildWeaponView();
+		}
+
+		private void BuildWeaponView()
+		{
+			_weaponViewport = new Viewport
+			{
+				Name = "WeaponViewport",
+				World = GetWorld(),
+				Usage = Viewport.UsageEnum.Usage3dNoEffects,
+				TransparentBg = true,
+				RenderTargetVFlip = true,
+				RenderTargetUpdateMode = Viewport.UpdateMode.Always,
+				HandleInputLocally = false,
+				Hdr = false
+			};
+			AddChild(_weaponViewport);
+
+			_weaponCamera = new Camera
+			{
+				Name = "WeaponCamera",
+				Current = true,
+				Fov = _camera.Fov,
+				Near = 0.01f,
+				Far = 10.0f,
+				KeepAspect = _camera.KeepAspect,
+				CullMask = WeaponVisualLayer
+			};
+			_weaponViewport.AddChild(_weaponCamera);
 
 			_gun = new MeshInstance
-            {
-                Name = "Blaster",
-                Mesh = new CubeMesh { Size = new Vector3(0.22f, 0.18f, 0.7f) },
-                Translation = new Vector3(0.42f, -0.32f, -0.75f),
+			{
+				Name = "Blaster",
+				Mesh = new CubeMesh { Size = new Vector3(0.22f, 0.18f, 0.7f) },
+				Translation = new Vector3(0.42f, -0.32f, -0.75f),
+				Layers = WeaponVisualLayer,
                 MaterialOverride = new SpatialMaterial
                 {
                     AlbedoColor = new Color(0.08f, 0.1f, 0.14f),
                     Metallic = 0.8f,
                     Roughness = 0.25f
-                }
-            };
+				}
+			};
 			_camera.AddChild(_gun);
-        }
+
+			_weaponOverlay = new CanvasLayer { Name = "WeaponOverlay", Layer = 700 };
+			AddChild(_weaponOverlay);
+			_weaponView = new TextureRect
+			{
+				Name = "WeaponView",
+				Texture = _weaponViewport.GetTexture(),
+				AnchorRight = 1.0f,
+				AnchorBottom = 1.0f,
+				Expand = true,
+				StretchMode = TextureRect.StretchModeEnum.Scale,
+				MouseFilter = Control.MouseFilterEnum.Ignore
+			};
+			_weaponOverlay.AddChild(_weaponView);
+			UpdateWeaponCamera();
+			ResizeWeaponViewport();
+		}
+
+		private void UpdateWeaponCamera()
+		{
+			if (_weaponCamera == null || _camera == null)
+				return;
+			_weaponCamera.GlobalTransform = _camera.GlobalTransform;
+			_weaponCamera.Fov = _camera.Fov;
+			_weaponCamera.KeepAspect = _camera.KeepAspect;
+		}
+
+		private void ResizeWeaponViewport()
+		{
+			if (_weaponViewport == null)
+				return;
+			Vector2 screenSize = GetViewport().Size;
+			if (_weaponViewport.Size != screenSize)
+				_weaponViewport.Size = screenSize;
+		}
+
+		private void SetWeaponVisible(bool visible)
+		{
+			_gun.Visible = visible;
+			_weaponView.Visible = visible;
+			_weaponViewport.RenderTargetUpdateMode = visible
+				? Viewport.UpdateMode.Always
+				: Viewport.UpdateMode.Disabled;
+		}
 
         private void BindHud()
         {

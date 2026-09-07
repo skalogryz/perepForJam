@@ -88,7 +88,8 @@ namespace PereSkyroom
 				Name = name + "Camera",
 				Current = true,
 				Far = 200.0f,
-				KeepAspect = Camera.KeepAspectEnum.Width
+				KeepAspect = Camera.KeepAspectEnum.Width,
+				CullMask = PlayerController.SceneCameraCullMask
 			};
 			viewport.AddChild(camera);
 			return viewport;
