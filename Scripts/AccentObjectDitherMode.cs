@@ -58,6 +58,8 @@ void fragment() {
 		public override void _Ready()
 		{
 			Layer = 1050;
+			if (Dither != null && IsInstanceValid(Dither))
+				Dither.AccentDitherMode = this;
 			var sourceMeshes = new List<MeshInstance>();
 			CollectSourceMeshes(GetParent(), sourceMeshes);
 
@@ -82,7 +84,11 @@ void fragment() {
 
 		public override void _Process(float delta)
 		{
-			if (Input.IsActionJustPressed("toggle_accent_object_dither"))
+			if (Enabled && (Dither == null || !IsInstanceValid(Dither) || !Dither.Enabled))
+				SetEnabled(false);
+
+			if (Input.IsActionJustPressed("toggle_accent_object_dither")
+				&& Dither != null && IsInstanceValid(Dither) && Dither.Enabled)
 				SetEnabled(!Enabled);
 			if (!Enabled)
 				return;
@@ -95,6 +101,9 @@ void fragment() {
 
 		public void SetEnabled(bool enabled)
 		{
+			if (enabled && (Dither == null || !IsInstanceValid(Dither) || !Dither.Enabled))
+				return;
+
 			Enabled = enabled;
 			if (!enabled)
 			{

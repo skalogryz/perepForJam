@@ -45,7 +45,7 @@ namespace PereSkyroom
 					sideCameraMode.SetEnabled(true);
 					panoramicFovMode.SetEnabled(true);
 					dither.SetEnabled(true);
-					RunSmokeTest(wireframe, accentDither);
+					RunSmokeTest(wireframe, accentDither, dither);
 					break;
 				}
 			}
@@ -216,7 +216,8 @@ namespace PereSkyroom
 
 		private async void RunSmokeTest(
 			AccentWireframeOverlay wireframe,
-			AccentObjectDitherMode accentDither)
+			AccentObjectDitherMode accentDither,
+			BlueNoiseDither dither)
 		{
 			await ToSignal(GetTree().CreateTimer(0.35f), "timeout");
 			if (wireframe.DrawPassCount <= 0)
@@ -230,6 +231,21 @@ namespace PereSkyroom
 			if (accentDither.DrawPassCount <= 0)
 			{
 				GD.PushError("Accent object dithering did not complete a mask draw pass.");
+				GetTree().Quit(1);
+				return;
+			}
+			dither.SetEnabled(false);
+			await ToSignal(GetTree(), "idle_frame");
+			if (accentDither.Enabled)
+			{
+				GD.PushError("Accent object dithering stayed enabled after dithering was disabled.");
+				GetTree().Quit(1);
+				return;
+			}
+			accentDither.SetEnabled(true);
+			if (accentDither.Enabled)
+			{
+				GD.PushError("Accent object dithering enabled while dithering was disabled.");
 				GetTree().Quit(1);
 				return;
 			}

@@ -26,6 +26,7 @@ void fragment() {
 		public Color DarkColor = new Color(0.035f, 0.045f, 0.075f, 1.0f);
 		public Color LightColor = new Color(0.95f, 0.82f, 0.36f, 1.0f);
 		public PlayerController Player;
+		public AccentObjectDitherMode AccentDitherMode;
 
 		private ColorRect _overlay;
 		private ShaderMaterial _material;
@@ -67,6 +68,9 @@ void fragment() {
 		{
 			_enabled = enabled;
 			_overlay.Visible = _enabled;
+			if (!_enabled && AccentDitherMode != null && IsInstanceValid(AccentDitherMode)
+				&& AccentDitherMode.Enabled)
+				AccentDitherMode.SetEnabled(false);
 			if (Player != null && IsInstanceValid(Player))
 				Player.SetDitherMode(_enabled);
 		}
