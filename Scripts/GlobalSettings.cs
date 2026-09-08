@@ -7,6 +7,9 @@ namespace PereSkyroom
 {
 	public class GlobalSettings : Node
 	{
+		[Signal]
+		public delegate void TriggerEvent(string eventName, Node player, Node triggerField);
+
 		public static GlobalSettings inst = null;
 
 		[Export]
@@ -17,6 +20,18 @@ namespace PereSkyroom
 			GD.Print("starting the global settings");
 			if (inst == null)
 				inst = this;
+		}
+
+		public void PublishTriggerEvent(string eventName, PlayerController player, TriggerField triggerField)
+		{
+			EmitSignal(nameof(TriggerEvent), eventName, player, triggerField);
+		}
+
+		public static void DoTriggerEvent(string eventName, PlayerController player, TriggerField triggerField)
+        {
+			if (inst == null) return;
+			if (!IsInstanceValid(GlobalSettings.inst)) return;
+			inst.PublishTriggerEvent(eventName, player, triggerField);
 		}
 	}
 }

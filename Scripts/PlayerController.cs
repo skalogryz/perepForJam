@@ -4,6 +4,8 @@ namespace PereSkyroom
 {
     public class PlayerController : KinematicBody
     {
+		public const uint WorldCollisionLayer = 1u << 0;
+		public const uint PlayerTriggerLayer = 1u << 1;
 		public const uint WeaponVisualLayer = 1u << 19;
 		public const uint SceneCameraCullMask = uint.MaxValue ^ WeaponVisualLayer;
 
@@ -189,6 +191,9 @@ namespace PereSkyroom
 
         private void BuildBody()
         {
+			CollisionLayer = WorldCollisionLayer | PlayerTriggerLayer;
+			CollisionMask = WorldCollisionLayer;
+
             var collider = new CollisionShape
             {
                 Shape = new CapsuleShape { Radius = 0.42f, Height = 1.05f },

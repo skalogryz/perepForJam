@@ -38,6 +38,14 @@
 в редакторе. Его CanvasLayer `1150` располагается выше всех dithering/accent-эффектов,
 но ниже `PlayerStatsHUD` (`1200`), поэтому диалоги не дизерятся и рисуются под статистикой.
 
+## Trigger fields
+
+`TriggerField.tscn` — невидимое поле с редактируемым `CollisionShape`. У экземпляра поля
+в Inspector задаются `EventName`, `TriggerOnce` и `Enabled`. Поле реагирует исключительно
+на `PlayerController`: локально испускает сигнал `Triggered(eventName, player)`, а также
+публикует глобальный сигнал `GlobalSettings.TriggerEvent(eventName, player, triggerField)`.
+В `Main.tscn` добавлен пример `RoomCenterTrigger` с событием `room_center_entered`.
+
 Начальные состояния визуальных переключателей задаются у корневого узла `Main` в Inspector:
 dithering, инверсия палитры, боковые камеры, панорамный FOV, оружие, HUD, счётчик FPS,
 wireframe и accent object dithering. При сбросе уровня через `F2` сохраняются текущие
