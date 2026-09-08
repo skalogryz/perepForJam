@@ -14,6 +14,7 @@ namespace PereSkyroom
         private const float JumpSpeed = 8.2f;
         private const float Gravity = 22.0f;
         private const float MouseSensitivity = 0.10f;
+		private const float InteractionDistance = 100.0f;
 
 		public float SpeedBoostMovementMultiplier = 3.5f;
 		public float SpeedBoostJumpMultiplier = 1.0f;
@@ -113,6 +114,9 @@ namespace PereSkyroom
 				UpdatePlayerStatsHud();
 				ShowMessage(_speedBoostEnabled ? "SPEED BOOST ENABLED" : "NORMAL SPEED");
 			}
+
+			if (Input.IsActionJustPressed("interact"))
+				GlobalSettings.ActivateTarget(GetLookedAtSpatial(), this);
 
             if (Input.IsActionJustPressed("toggle_flight"))
             {
@@ -363,6 +367,18 @@ namespace PereSkyroom
                 ShowMessage("IMPACT");
             }
         }
+
+		private Spatial GetLookedAtSpatial()
+		{
+			Vector3 from = _camera.GlobalTransform.origin;
+			Vector3 to = from + (-_camera.GlobalTransform.basis.z * InteractionDistance);
+			var exclude = new Godot.Collections.Array { this };
+			Godot.Collections.Dictionary hit = GetWorld().DirectSpaceState.IntersectRay(from, to, exclude);
+			if (hit.Count == 0)
+				return null;
+
+			return hit["collider"] as Spatial;
+		}
 
         private async void ShowMessage(string text)
         {

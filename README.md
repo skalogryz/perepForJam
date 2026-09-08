@@ -8,6 +8,7 @@
 - `Space` — прыжок; в полёте набор высоты
 - `Ctrl` — снижение в режиме полёта
 - `Tab` — включить/выключить настраиваемое ускорение движения и прыжка
+- `E` — активировать объект, на который смотрит игрок
 - `F` — включить/выключить режим полёта
 - `B` — включить/выключить полноэкранный двухцветный blue-noise dithering
 - `I` — поменять местами light и dark цвета dithering
@@ -41,9 +42,14 @@
 ## Trigger fields
 
 `TriggerField.tscn` — невидимое поле с редактируемым `CollisionShape`. У экземпляра поля
-в Inspector задаются `EventName`, `TriggerOnce` и `Enabled`. Поле реагирует исключительно
-на `PlayerController`: локально испускает сигнал `Triggered(eventName, player)`, а также
-публикует глобальный сигнал `GlobalSettings.TriggerEvent(eventName, player, triggerField)`.
+в Inspector задаются `EventName`, `ActivateTarget`, `TriggerOnce` и `Enabled`. Поле реагирует
+исключительно на `PlayerController`: локально испускает сигнал `Triggered(eventName, player)`,
+а также публикует глобальный сигнал
+`GlobalSettings.TriggerEvent(eventName, player, triggerField)`.
+
+Если `ActivateTarget` не задан, событие вызывается сразу при входе игрока. Если задан,
+поле регистрируется в `GlobalSettings` на время нахождения игрока внутри. Событие вызывается
+только после нажатия `E`, когда луч из камеры попал именно в указанный `Spatial`.
 В `Main.tscn` добавлен пример `RoomCenterTrigger` с событием `room_center_entered`.
 
 Начальные состояния визуальных переключателей задаются у корневого узла `Main` в Inspector:
