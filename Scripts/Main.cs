@@ -227,8 +227,25 @@ namespace PereSkyroom
 			targets.Add(AddTarget(new Vector3(0.0f, 3.4f, -2.3f)));
 			targets.Add(AddTarget(new Vector3(5.4f, 4.6f, -6.0f)));
 			targets.Add(AddTarget(new Vector3(-3.5f, 5.8f, -8.8f)));
-			targets.Add(AddTarget(new Vector3(8.8f, 1.3f, -9.5f)));
+			ShootTarget lastTarget = AddTarget(new Vector3(8.8f, 1.3f, -9.5f));
+			targets.Add(lastTarget);
+			AddTargetTriggerField(lastTarget);
 			return targets;
+		}
+
+		private void AddTargetTriggerField(ShootTarget target)
+		{
+			var triggerField = new TriggerField
+			{
+				Name = "ActivationTrigger",
+				EventName = "last_target_activated",
+				ActivateTarget = target
+			};
+			triggerField.AddChild(new CollisionShape
+			{
+				Shape = new BoxShape { Extents = new Vector3(2.5f, 2.5f, 2.5f) }
+			});
+			target.AddChild(triggerField);
 		}
 
 		private PlayerController BuildPlayer()
