@@ -13,6 +13,10 @@ config_version=4
 config/name="Perepetia s Remnyami"
 run/main_scene="res://Main.tscn"
 
+[autoload]
+
+AutoLoad="*res://AutoLoad.tscn"
+
 [display]
 
 window/size/width=960
