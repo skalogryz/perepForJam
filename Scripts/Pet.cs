@@ -27,6 +27,8 @@ namespace PereSkyroom
 		private Vector3 _velocity;
 		private bool _targetRequiresJump;
 		private bool _jumpStartedForTarget;
+		private bool _collisionlessJumpInProgress;
+		private float _jumpLandingCenterY;
 
 		public override void _Ready()
 		{
@@ -64,12 +66,12 @@ namespace PereSkyroom
 
 			if (!IsInstanceValid(_targetStone))
 			{
-				GD.Print("Selecting stone");
+				//GD.Print("Selecting stone");
 				SelectTargetStone(playerPosition);
 			}
 			if (!IsInstanceValid(_targetStone))
 			{
-				GD.Print("...failed to select stone");
+				//GD.Print("...failed to select stone");
 				MoveWithGravity(Vector3.Zero, delta);
 				return;
 			}
@@ -79,7 +81,7 @@ namespace PereSkyroom
 			float reachDistance = Mathf.Max(_targetStone.SideLength, 0.01f);
 			if (toTarget.Length() <= reachDistance)
 			{
-				GD.Print("target reached");
+				//GD.Print("target reached");
 				StoneManager.RemoveStone(_targetStone);
 				_targetStone = null;
 				_targetRequiresJump = false;
@@ -94,12 +96,14 @@ namespace PereSkyroom
 			Vector3 horizontalVelocity = horizontal.LengthSquared() > 0.0001f
 				? horizontal.Normalized() * MoveSpeed
 				: Vector3.Zero;
-			if (_targetRequiresJump && !_jumpStartedForTarget && IsOnFloor())
+			if (_targetRequiresJump && !_jumpStartedForTarget
+				&& !_collisionlessJumpInProgress && IsOnFloor())
 			{
 				float requiredHeight = Mathf.Max(toTarget.y, 0.0f) + SideLength;
 				float calculatedJump = Mathf.Sqrt(2.0f * Gravity * requiredHeight);
 				_velocity.y = Mathf.Max(JumpSpeed, calculatedJump);
 				_jumpStartedForTarget = true;
+				BeginCollisionlessJump(_targetStone);
 			}
 
 			MoveWithGravity(horizontalVelocity, delta);
@@ -117,6 +121,8 @@ namespace PereSkyroom
 			_targetStone = null;
 			_targetRequiresJump = false;
 			_jumpStartedForTarget = false;
+			_collisionlessJumpInProgress = false;
+			CollisionMask = PlayerController.WorldCollisionLayer;
 		}
 
 		private void SelectTargetStone(Vector3 playerPosition)
@@ -179,6 +185,7 @@ namespace PereSkyroom
 
 		private void MoveWithGravity(Vector3 horizontalVelocity, float delta)
 		{
+			float previousY = GlobalTransform.origin.y;
 			_velocity.x = horizontalVelocity.x;
 			_velocity.z = horizontalVelocity.z;
 			if (!IsOnFloor())
@@ -186,6 +193,37 @@ namespace PereSkyroom
 			else if (_velocity.y < 0.0f)
 				_velocity.y = 0.0f;
 			_velocity = MoveAndSlide(_velocity, Vector3.Up, true, 4, Mathf.Deg2Rad(55.0f));
+			TryFinishCollisionlessJump(previousY);
+		}
+
+		private void BeginCollisionlessJump(DroppedStone targetStone)
+		{
+			float stoneHalfHeight = Mathf.Max(targetStone.SideLength, 0.01f) * 0.5f;
+			float petHalfHeight = Mathf.Max(SideLength, 0.05f) * 0.5f;
+			float targetFloorY = targetStone.TrackedPosition.y - stoneHalfHeight;
+			_jumpLandingCenterY = targetFloorY + petHalfHeight;
+			_collisionlessJumpInProgress = true;
+			CollisionMask = 0;
+		}
+
+		private void TryFinishCollisionlessJump(float previousY)
+		{
+			if (!_collisionlessJumpInProgress || _velocity.y > 0.0f)
+				return;
+
+			float currentY = GlobalTransform.origin.y;
+			if (previousY < _jumpLandingCenterY || currentY > _jumpLandingCenterY)
+				return;
+
+			Transform transform = GlobalTransform;
+			transform.origin = new Vector3(
+				transform.origin.x,
+				_jumpLandingCenterY,
+				transform.origin.z);
+			GlobalTransform = transform;
+			_velocity.y = 0.0f;
+			_collisionlessJumpInProgress = false;
+			CollisionMask = PlayerController.WorldCollisionLayer;
 		}
 
 		private void FacePoint(Vector3 point)
