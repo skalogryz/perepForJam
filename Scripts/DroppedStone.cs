@@ -9,9 +9,11 @@ namespace PereSkyroom
 		public Vector3 PreviousTrackedPosition { get; private set; }
 		public DroppedStone PreviousStone { get; set; }
 		public bool PhysicsDisabled { get; private set; }
+		public float SideLength { get; private set; }
 
 		public void Initialize(float sideLength, PlayerController player)
 		{
+			SideLength = sideLength;
 			SpawnTimeMilliseconds = OS.GetTicksMsec();
 			TrackedPosition = GlobalTransform.origin;
 			PreviousTrackedPosition = TrackedPosition;

@@ -63,18 +63,24 @@ namespace PereSkyroom
 			}
 
 			if (!IsInstanceValid(_targetStone))
+			{
+				GD.Print("Selecting stone");
 				SelectTargetStone(playerPosition);
+			}
 			if (!IsInstanceValid(_targetStone))
 			{
+				GD.Print("...failed to select stone");
 				MoveWithGravity(Vector3.Zero, delta);
 				return;
 			}
 
 			Vector3 targetPosition = _targetStone.TrackedPosition;
 			Vector3 toTarget = targetPosition - GlobalTransform.origin;
-			float reachDistance = Mathf.Max(StoneReachDistance, SideLength * 0.5f);
+			float reachDistance = Mathf.Max(_targetStone.SideLength, 0.01f);
 			if (toTarget.Length() <= reachDistance)
 			{
+				GD.Print("target reached");
+				StoneManager.RemoveStone(_targetStone);
 				_targetStone = null;
 				_targetRequiresJump = false;
 				_jumpStartedForTarget = false;
@@ -142,6 +148,24 @@ namespace PereSkyroom
 
 				selected = stone;
 				selectedPlayerDistance = playerDistance;
+			}
+
+			if (selected == null)
+			{
+				float selectedPetDistance = float.MaxValue;
+				for (int i = 0; i < _stoneCandidates.Count; i++)
+				{
+					DroppedStone stone = _stoneCandidates[i];
+					if (!IsInstanceValid(stone) || !stone.PhysicsDisabled)
+						continue;
+
+					Vector3 petToStone = stone.TrackedPosition - GlobalTransform.origin;
+					float petDistance = new Vector2(petToStone.x, petToStone.z).Length();
+					if (petDistance >= selectedPetDistance)
+						continue;
+					selected = stone;
+					selectedPetDistance = petDistance;
+				}
 			}
 
 			if (selected == null)

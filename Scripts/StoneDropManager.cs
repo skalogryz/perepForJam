@@ -90,6 +90,15 @@ namespace PereSkyroom
 			}
 		}
 
+		public bool RemoveStone(DroppedStone stone)
+		{
+			int index = _stones.IndexOf(stone);
+			if (index < 0)
+				return false;
+			RemoveStoneAt(index);
+			return true;
+		}
+
 		private void SpawnStone()
 		{
 			if (Player == null || !IsInstanceValid(Player))
