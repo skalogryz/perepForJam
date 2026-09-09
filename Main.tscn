@@ -12,6 +12,7 @@ WeaponVisibleByDefault = false
 HudLabelsVisibleByDefault = false
 FpsVisibleByDefault = true
 SpeedBoostJumpMultiplier = 1.2
+StoneSpawnIntervalSeconds = 0.5
 AccentWireframeColor = Color( 0.682353, 1, 0, 1 )
 
 [node name="RoomCenterTrigger" parent="." instance=ExtResource( 2 )]

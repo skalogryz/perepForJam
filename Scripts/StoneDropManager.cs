@@ -85,7 +85,7 @@ namespace PereSkyroom
 				PreviousStone = previous
 			};
 			AddChild(stone);
-			stone.GlobalTransform = new Transform(Basis.Identity, Player.GlobalTransform.origin);
+			stone.GlobalTransform = new Transform(Basis.Identity, Player.HeadGlobalPosition);
 			stone.Initialize(sideLength, Player);
 			_stones.Add(stone);
 		}

@@ -48,6 +48,15 @@ namespace PereSkyroom
 		public bool WeaponVisible { get { return _weaponView != null && _weaponView.Visible; } }
 		public bool HudLabelsVisible { get { return _hud != null && _hud.Visible; } }
 		public bool FpsVisible { get { return _fpsVisible; } }
+		public Vector3 HeadGlobalPosition
+		{
+			get
+			{
+				return _head != null && IsInstanceValid(_head)
+					? _head.GlobalTransform.origin
+					: GlobalTransform.origin + Vector3.Up * 1.55f;
+			}
+		}
 
         public override void _Ready()
         {
