@@ -11,7 +11,7 @@ DitherEnabledByDefault = true
 WeaponVisibleByDefault = false
 HudLabelsVisibleByDefault = false
 FpsVisibleByDefault = true
-SpeedBoostJumpMultiplier = 1.2
+SpeedBoostJumpMultiplier = 2.0
 StoneSpawnIntervalSeconds = 0.5
 AccentWireframeColor = Color( 0.682353, 1, 0, 1 )
 
