@@ -145,6 +145,8 @@ namespace PereSkyroom
 		{
 			_pendingDisplayModeState = CaptureDisplayModeState();
 			_pendingBlendLevelPath = _loadedBlendLevelPath;
+			if (_stoneDropManager != null && IsInstanceValid(_stoneDropManager))
+				_stoneDropManager.ClearStones();
 			GetTree().ReloadCurrentScene();
 		}
 
