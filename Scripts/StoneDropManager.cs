@@ -67,6 +67,29 @@ namespace PereSkyroom
 			_spawnTimer = 0.0f;
 		}
 
+		public void CopyStonesTo(List<DroppedStone> destination)
+		{
+			destination.Clear();
+			RemoveInvalidStones();
+			for (int i = 0; i < _stones.Count; i++)
+				destination.Add(_stones[i]);
+		}
+
+		public void RemoveStonesOlderThan(ulong spawnTimeMilliseconds)
+		{
+			for (int i = _stones.Count - 1; i >= 0; i--)
+			{
+				DroppedStone stone = _stones[i];
+				if (!IsInstanceValid(stone))
+				{
+					_stones.RemoveAt(i);
+					continue;
+				}
+				if (stone.SpawnTimeMilliseconds < spawnTimeMilliseconds)
+					RemoveStoneAt(i);
+			}
+		}
+
 		private void SpawnStone()
 		{
 			if (Player == null || !IsInstanceValid(Player))

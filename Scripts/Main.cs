@@ -21,6 +21,13 @@ namespace PereSkyroom
 		[Export] public float StoneSpawnIntervalSeconds = 3.0f;
 		[Export] public float StoneEvaluationDelaySeconds = 3.0f;
 		[Export] public int MaximumStoneCount = 20;
+		[Export] public PackedScene PetScene;
+		[Export] public float PetPlayerReachDistance = 2.0f;
+		[Export] public float PetStoneSearchDistance = 3.0f;
+		[Export] public float PetSideLength = 0.5f;
+		[Export] public float PetMoveSpeed = 3.5f;
+		[Export] public float PetJumpSpeed = 7.0f;
+		[Export] public float PetFallY = -15.0f;
 		[Export] public string BlendLevelPathOnStartup = string.Empty;
 		// Change this value in code to configure both side-camera yaw offsets.
 		public float SideCameraAngleDegrees = 90.0f;
@@ -58,6 +65,7 @@ namespace PereSkyroom
 		private Spatial _levelRoot;
 		private PlayerController _player;
 		private StoneDropManager _stoneDropManager;
+		private Pet _pet;
 		private SideCameraMode _sideCameraMode;
 		private PanoramicFovMode _panoramicFovMode;
 		private BlueNoiseDither _dither;
@@ -79,6 +87,7 @@ namespace PereSkyroom
 			List<ShootTarget> targets = BuildTargets();
 			_player = BuildPlayer();
 			_stoneDropManager = BuildStoneDropManager(_player);
+			_pet = BuildPet(_player, _stoneDropManager);
 			_sideCameraMode = BuildSideCameraMode(_player);
 			_panoramicFovMode = BuildPanoramicFovMode(_player);
 			_dither = BuildDitherPostProcess(_player);
@@ -201,6 +210,7 @@ namespace PereSkyroom
 				_accentDither.Targets = noTargets;
 				_player.PlaceAt(loaded.PlayerSpawn);
 				_stoneDropManager.ClearStones();
+				_pet.RespawnAtPlayer();
 				_loadedBlendLevelPath = path;
 				GD.Print("Loaded .blend level: " + path + " (" + loaded.MeshObjectCount + " mesh objects).");
 				if (showMessage)
@@ -393,6 +403,41 @@ namespace PereSkyroom
 			};
 			AddChild(manager);
 			return manager;
+		}
+
+		private Pet BuildPet(PlayerController player, StoneDropManager stoneManager)
+		{
+			Pet pet = null;
+			Node customVisual = null;
+			if (PetScene != null)
+			{
+				Node instance = PetScene.Instance();
+				pet = instance as Pet;
+				if (pet == null)
+					customVisual = instance;
+			}
+			if (pet == null)
+				pet = new Pet();
+
+			pet.Name = "Pet";
+			pet.Player = player;
+			pet.StoneManager = stoneManager;
+			pet.SideLength = PetSideLength;
+			pet.PlayerReachDistance = PetPlayerReachDistance;
+			pet.StoneSearchDistance = PetStoneSearchDistance;
+			pet.MoveSpeed = PetMoveSpeed;
+			pet.JumpSpeed = PetJumpSpeed;
+			pet.FallY = PetFallY;
+			pet.UseDefaultVisual = customVisual == null && PetScene == null;
+			if (customVisual != null)
+				pet.AddChild(customVisual);
+			AddChild(pet);
+			pet.GlobalTransform = new Transform(
+				Basis.Identity,
+				player.GlobalTransform.origin
+					+ Vector3.Right * Mathf.Max(PetPlayerReachDistance * 0.6f, 0.75f)
+					+ Vector3.Up * (Mathf.Max(PetSideLength, 0.05f) * 0.5f + 0.05f));
+			return pet;
 		}
 
 		private BlueNoiseDither BuildDitherPostProcess(PlayerController player)
