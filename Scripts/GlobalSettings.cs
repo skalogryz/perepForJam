@@ -64,7 +64,7 @@ namespace PereSkyroom
 		}
 
 		public static void DoTriggerEvent(string eventName, PlayerController player, TriggerField triggerField)
-        {
+		{
 			if (inst == null) return;
 			if (!IsInstanceValid(GlobalSettings.inst)) return;
 			inst.PublishTriggerEvent(eventName, player, triggerField);

@@ -320,6 +320,21 @@ namespace PereSkyroom
 			_fpsRefreshTimer = 0.0f;
 		}
 
+		public void PlaceAt(Vector3 position)
+		{
+			Translation = position;
+			Rotation = Vector3.Zero;
+			_pitch = 0.0f;
+			if (_head != null)
+				_head.Rotation = Vector3.Zero;
+			_velocity = Vector3.Zero;
+		}
+
+		public void ShowSystemMessage(string text)
+		{
+			ShowMessage(text);
+		}
+
         private void BindHud()
         {
 			Node hudOwner = GetParent();

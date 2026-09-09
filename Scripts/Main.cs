@@ -17,6 +17,11 @@ namespace PereSkyroom
 		[Export] public bool FpsVisibleByDefault = false;
 		[Export] public float SpeedBoostMovementMultiplier = 3.5f;
 		[Export] public float SpeedBoostJumpMultiplier = 1.0f;
+		[Export] public float StoneSideLength = 0.25f;
+		[Export] public float StoneSpawnIntervalSeconds = 3.0f;
+		[Export] public float StoneEvaluationDelaySeconds = 3.0f;
+		[Export] public int MaximumStoneCount = 20;
+		[Export] public string BlendLevelPathOnStartup = string.Empty;
 		// Change this value in code to configure both side-camera yaw offsets.
 		public float SideCameraAngleDegrees = 90.0f;
 		public bool SmoothSideCameraTransitionEnabled = true;
@@ -48,22 +53,32 @@ namespace PereSkyroom
 		private readonly Color _platformColor = new Color(0.18f, 0.55f, 0.72f);
 		private static DisplayModeState _pendingDisplayModeState;
 		private static bool _verifyDisplayModesAfterReset;
+		private static string _pendingBlendLevelPath;
 
+		private Spatial _levelRoot;
 		private PlayerController _player;
+		private StoneDropManager _stoneDropManager;
 		private SideCameraMode _sideCameraMode;
 		private PanoramicFovMode _panoramicFovMode;
 		private BlueNoiseDither _dither;
 		private AccentObjectDitherMode _accentDither;
 		private AccentWireframeOverlay _wireframe;
+		private FileDialog _blendFileDialog;
+		private Input.MouseModeEnum _mouseModeBeforeFileDialog;
+		private string _loadedBlendLevelPath;
 
 		public override void _Ready()
 		{
 			DisplayModeState initialDisplayModes = TakeInitialDisplayModeState();
+			_levelRoot = new Spatial { Name = "RuntimeLevel" };
+			AddChild(_levelRoot);
+			MoveSceneLevelNodesToRuntimeRoot();
 			BuildEnvironment();
 			BuildRoom();
 			BuildPlatforms();
 			List<ShootTarget> targets = BuildTargets();
 			_player = BuildPlayer();
+			_stoneDropManager = BuildStoneDropManager(_player);
 			_sideCameraMode = BuildSideCameraMode(_player);
 			_panoramicFovMode = BuildPanoramicFovMode(_player);
 			_dither = BuildDitherPostProcess(_player);
@@ -72,9 +87,24 @@ namespace PereSkyroom
 			_wireframe = BuildAccentWireframe(
 				targets, _player, _sideCameraMode, _panoramicFovMode, _dither, _accentDither);
 			ApplyDisplayModeState(initialDisplayModes);
+			SetupBlendFileDialog();
+
+			if (!string.IsNullOrEmpty(_pendingBlendLevelPath))
+			{
+				string path = _pendingBlendLevelPath;
+				_pendingBlendLevelPath = null;
+				LoadBlendLevel(path, false);
+			}
+			else if (!string.IsNullOrEmpty(BlendLevelPathOnStartup))
+				LoadBlendLevel(BlendLevelPathOnStartup, false);
 
 			foreach (string argument in OS.GetCmdlineArgs())
 			{
+				if (argument.StartsWith("--blend-level="))
+				{
+					LoadBlendLevel(argument.Substring("--blend-level=".Length), false);
+					continue;
+				}
 				if (argument == "--smoke-test" || argument == "--no-window")
 				{
 					if (_verifyDisplayModesAfterReset)
@@ -91,10 +121,97 @@ namespace PereSkyroom
 			}
 		}
 
+		private void MoveSceneLevelNodesToRuntimeRoot()
+		{
+			Node roomCenterTrigger = GetNodeOrNull("RoomCenterTrigger");
+			if (roomCenterTrigger == null)
+				return;
+
+			RemoveChild(roomCenterTrigger);
+			_levelRoot.AddChild(roomCenterTrigger);
+		}
+
+		public override void _UnhandledInput(InputEvent inputEvent)
+		{
+			var key = inputEvent as InputEventKey;
+			if (key == null || !key.Pressed || key.Echo || key.Scancode != (uint)KeyList.F1)
+				return;
+
+			ShowBlendFileDialog();
+			GetTree().SetInputAsHandled();
+		}
+
 		public void ResetLevel()
 		{
 			_pendingDisplayModeState = CaptureDisplayModeState();
+			_pendingBlendLevelPath = _loadedBlendLevelPath;
 			GetTree().ReloadCurrentScene();
+		}
+
+		private void SetupBlendFileDialog()
+		{
+			var layer = new CanvasLayer { Name = "BlendFileDialogLayer", Layer = 1400 };
+			_blendFileDialog = new FileDialog
+			{
+				Name = "BlendFileDialog",
+				Mode = FileDialog.ModeEnum.OpenFile,
+				Access = FileDialog.AccessEnum.Filesystem,
+				Filters = new[] { "*.blend ; Blender scene" }
+			};
+			layer.AddChild(_blendFileDialog);
+			AddChild(layer);
+			_blendFileDialog.Connect("file_selected", this, nameof(OnBlendFileSelected));
+			_blendFileDialog.Connect("popup_hide", this, nameof(OnBlendFileDialogHidden));
+		}
+
+		private void ShowBlendFileDialog()
+		{
+			if (_blendFileDialog == null || _blendFileDialog.Visible)
+				return;
+			_mouseModeBeforeFileDialog = Input.MouseMode;
+			Input.MouseMode = Input.MouseModeEnum.Visible;
+			_blendFileDialog.PopupCenteredRatio(0.82f);
+		}
+
+		private void OnBlendFileDialogHidden()
+		{
+			Input.MouseMode = _mouseModeBeforeFileDialog;
+		}
+
+		private void OnBlendFileSelected(string path)
+		{
+			LoadBlendLevel(path, true);
+		}
+
+		private bool LoadBlendLevel(string path, bool showMessage)
+		{
+			try
+			{
+				LoadedBlendLevel loaded = BlendLevelLoader.Load(path);
+				Spatial oldLevel = _levelRoot;
+				_levelRoot = loaded.Root;
+				AddChild(_levelRoot);
+				if (oldLevel != null && IsInstanceValid(oldLevel))
+					oldLevel.QueueFree();
+
+				var noTargets = new List<ShootTarget>();
+				_wireframe.Targets = noTargets;
+				_accentDither.Targets = noTargets;
+				_player.PlaceAt(loaded.PlayerSpawn);
+				_stoneDropManager.ClearStones();
+				_loadedBlendLevelPath = path;
+				GD.Print("Loaded .blend level: " + path + " (" + loaded.MeshObjectCount + " mesh objects).");
+				if (showMessage)
+					_player.ShowSystemMessage("BLEND LEVEL LOADED: " + loaded.MeshObjectCount + " OBJECTS");
+				return true;
+			}
+			catch (System.Exception exception)
+			{
+				GD.PushError("Cannot load .blend level '" + path + "': " + exception);
+				if (showMessage)
+					_player.ShowSystemMessage("BLEND LOAD FAILED");
+				return false;
+			}
 		}
 
 		private DisplayModeState TakeInitialDisplayModeState()
@@ -259,6 +376,21 @@ namespace PereSkyroom
 			AddChild(player);
 			player.Translation = new Vector3(0, 1.2f, 8.0f);
 			return player;
+		}
+
+		private StoneDropManager BuildStoneDropManager(PlayerController player)
+		{
+			var manager = new StoneDropManager
+			{
+				Name = "StoneDropManager",
+				Player = player,
+				StoneSideLength = StoneSideLength,
+				SpawnIntervalSeconds = StoneSpawnIntervalSeconds,
+				EvaluationDelaySeconds = StoneEvaluationDelaySeconds,
+				MaximumStoneCount = MaximumStoneCount
+			};
+			AddChild(manager);
+			return manager;
 		}
 
 		private BlueNoiseDither BuildDitherPostProcess(PlayerController player)
@@ -435,7 +567,7 @@ namespace PereSkyroom
 		private ShootTarget AddTarget(Vector3 position)
 		{
 			var target = new ShootTarget();
-			AddChild(target);
+			_levelRoot.AddChild(target);
 			target.Translation = position;
 			return target;
 		}
@@ -451,7 +583,7 @@ namespace PereSkyroom
 			};
 			body.AddChild(shape);
 			body.AddChild(mesh);
-			AddChild(body);
+			_levelRoot.AddChild(body);
 		}
 
 		private SpatialMaterial MakeMaterial(Color color, float roughness)
