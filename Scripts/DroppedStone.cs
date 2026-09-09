@@ -26,19 +26,7 @@ namespace PereSkyroom
 				Name = "CollisionShape",
 				Shape = new BoxShape { Extents = Vector3.One * sideLength * 0.5f }
 			};
-			var material = new SpatialMaterial
-			{
-				AlbedoColor = new Color(0.0f, 1.0f, 0.0f, 1.0f),
-				Roughness = 0.8f
-			};
-			var mesh = new MeshInstance
-			{
-				Name = "Mesh",
-				Mesh = new CubeMesh { Size = Vector3.One * sideLength },
-				MaterialOverride = material
-			};
 			AddChild(collision);
-			AddChild(mesh);
 
 			if (player != null)
 				AddCollisionExceptionWith(player);
