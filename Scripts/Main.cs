@@ -75,6 +75,14 @@ namespace PereSkyroom
 		private FileDialog _blendFileDialog;
 		private Input.MouseModeEnum _mouseModeBeforeFileDialog;
 		private string _loadedBlendLevelPath;
+		private CanvasLayer _dialogueHud;
+		private Node _activeDialogUi;
+		private bool _treeWasPausedBeforeDialog;
+		private Input.MouseModeEnum _mouseModeBeforeDialog;
+		private PauseModeEnum _mainPauseModeBeforeDialog;
+		private PauseModeEnum _dialogueHudPauseModeBeforeDialog;
+		private readonly Dictionary<Node, PauseModeEnum> _childPauseModesBeforeDialog
+			= new Dictionary<Node, PauseModeEnum>();
 
 		public override void _Ready()
 		{
@@ -98,6 +106,7 @@ namespace PereSkyroom
 				targets, _player, _sideCameraMode, _panoramicFovMode, _dither, _accentDither);
 			ApplyDisplayModeState(initialDisplayModes);
 			SetupBlendFileDialog();
+			SetupDialogueHud();
 
 			if (!string.IsNullOrEmpty(_pendingBlendLevelPath))
 			{
@@ -144,11 +153,157 @@ namespace PereSkyroom
 		public override void _UnhandledInput(InputEvent inputEvent)
 		{
 			var key = inputEvent as InputEventKey;
-			if (key == null || !key.Pressed || key.Echo || key.Scancode != (uint)KeyList.F1)
+			if (key == null || !key.Pressed || key.Echo)
+				return;
+			if (key.Scancode == (uint)KeyList.Escape && IsDialogActive())
+			{
+				CloseDialog();
+				GetTree().SetInputAsHandled();
+				return;
+			}
+			if (key.Scancode != (uint)KeyList.F1)
 				return;
 
 			ShowBlendFileDialog();
 			GetTree().SetInputAsHandled();
+		}
+
+		public override void _ExitTree()
+		{
+			DisconnectDialogueSignals();
+			if (IsDialogActive())
+				CloseDialog();
+		}
+
+		private void SetupDialogueHud()
+		{
+			_dialogueHud = GetNode<CanvasLayer>("DialogueHUD");
+			GlobalSettings settings = GlobalSettings.inst;
+			if (settings == null || !IsInstanceValid(settings))
+			{
+				GD.PushError("GlobalSettings is unavailable; dialogue events cannot be connected.");
+				return;
+			}
+
+			if (!settings.IsConnected(nameof(GlobalSettings.TriggerEvent), this, nameof(OnTriggerEvent)))
+				settings.Connect(nameof(GlobalSettings.TriggerEvent), this, nameof(OnTriggerEvent));
+			if (!settings.IsConnected(nameof(GlobalSettings.DialogCloseRequested), this, nameof(OnDialogCloseRequested)))
+				settings.Connect(nameof(GlobalSettings.DialogCloseRequested), this, nameof(OnDialogCloseRequested));
+		}
+
+		private void DisconnectDialogueSignals()
+		{
+			GlobalSettings settings = GlobalSettings.inst;
+			if (settings == null || !IsInstanceValid(settings))
+				return;
+			if (settings.IsConnected(nameof(GlobalSettings.TriggerEvent), this, nameof(OnTriggerEvent)))
+				settings.Disconnect(nameof(GlobalSettings.TriggerEvent), this, nameof(OnTriggerEvent));
+			if (settings.IsConnected(nameof(GlobalSettings.DialogCloseRequested), this, nameof(OnDialogCloseRequested)))
+				settings.Disconnect(nameof(GlobalSettings.DialogCloseRequested), this, nameof(OnDialogCloseRequested));
+		}
+
+		private void OnTriggerEvent(string eventName, Node player, Node triggerField)
+		{
+			if (IsDialogActive() || string.IsNullOrEmpty(eventName))
+				return;
+
+			GlobalSettings settings = GlobalSettings.inst;
+			if (settings == null || !IsInstanceValid(settings))
+				return;
+
+			DialogDescr dialog = null;
+			foreach (DialogDescr candidate in settings.Dialogs)
+			{
+				if (candidate != null && candidate.Name == eventName)
+				{
+					dialog = candidate;
+					break;
+				}
+			}
+			if (dialog == null || string.IsNullOrWhiteSpace(dialog.UIScene))
+				return;
+
+			PackedScene packedUi = ResourceLoader.Load<PackedScene>(dialog.UIScene);
+			if (packedUi == null)
+			{
+				GD.PushError("Cannot load dialogue UI scene: " + dialog.UIScene);
+				return;
+			}
+
+			ShowDialog(packedUi.Instance());
+		}
+
+		private void ShowDialog(Node dialogUi)
+		{
+			if (dialogUi == null || _dialogueHud == null || IsDialogActive())
+				return;
+
+			_treeWasPausedBeforeDialog = GetTree().Paused;
+			_mouseModeBeforeDialog = Input.MouseMode;
+			_mainPauseModeBeforeDialog = PauseMode;
+			_dialogueHudPauseModeBeforeDialog = _dialogueHud.PauseMode;
+			_childPauseModesBeforeDialog.Clear();
+			foreach (Node child in GetChildren())
+			{
+				if (child == _dialogueHud)
+					continue;
+				_childPauseModesBeforeDialog[child] = child.PauseMode;
+				child.PauseMode = PauseModeEnum.Stop;
+			}
+
+			PauseMode = PauseModeEnum.Process;
+			_dialogueHud.PauseMode = PauseModeEnum.Process;
+			dialogUi.PauseMode = PauseModeEnum.Process;
+			MoveNestedCanvasLayersAboveDialogueBackground(dialogUi);
+			_dialogueHud.AddChild(dialogUi);
+			_activeDialogUi = dialogUi;
+			Input.MouseMode = Input.MouseModeEnum.Visible;
+			GetTree().Paused = true;
+		}
+
+		private void OnDialogCloseRequested()
+		{
+			CloseDialog();
+		}
+
+		private void CloseDialog()
+		{
+			if (!IsDialogActive())
+				return;
+
+			foreach (Node child in _dialogueHud.GetChildren())
+			{
+				_dialogueHud.RemoveChild(child);
+				child.QueueFree();
+			}
+			_activeDialogUi = null;
+
+			foreach (KeyValuePair<Node, PauseModeEnum> entry in _childPauseModesBeforeDialog)
+			{
+				if (entry.Key != null && IsInstanceValid(entry.Key))
+					entry.Key.PauseMode = entry.Value;
+			}
+			_childPauseModesBeforeDialog.Clear();
+			_dialogueHud.PauseMode = _dialogueHudPauseModeBeforeDialog;
+			PauseMode = _mainPauseModeBeforeDialog;
+			Input.MouseMode = _mouseModeBeforeDialog;
+			GetTree().Paused = _treeWasPausedBeforeDialog;
+		}
+
+		private bool IsDialogActive()
+		{
+			return _activeDialogUi != null && IsInstanceValid(_activeDialogUi);
+		}
+
+		private void MoveNestedCanvasLayersAboveDialogueBackground(Node parent)
+		{
+			foreach (Node child in parent.GetChildren())
+			{
+				CanvasLayer nestedLayer = child as CanvasLayer;
+				if (nestedLayer != null)
+					nestedLayer.Layer = _dialogueHud.Layer + Mathf.Max(nestedLayer.Layer, 0) + 1;
+				MoveNestedCanvasLayersAboveDialogueBackground(child);
+			}
 		}
 
 		public void ResetLevel()

@@ -9,6 +9,8 @@ namespace PereSkyroom
 	{
 		[Signal]
 		public delegate void TriggerEvent(string eventName, Node player, Node triggerField);
+		[Signal]
+		public delegate void DialogCloseRequested();
 
 		public static GlobalSettings inst = null;
 		public static string CurrentLanguageCode { get; private set; } = string.Empty;
@@ -93,6 +95,13 @@ namespace PereSkyroom
 			if (inst == null) return;
 			if (!IsInstanceValid(GlobalSettings.inst)) return;
 			inst.PublishTriggerEvent(eventName, player, triggerField);
+		}
+
+		public static void DialogClosing()
+		{
+			if (inst == null || !IsInstanceValid(inst))
+				return;
+			inst.EmitSignal(nameof(DialogCloseRequested));
 		}
 	}
 }

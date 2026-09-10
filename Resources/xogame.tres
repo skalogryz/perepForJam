@@ -5,4 +5,4 @@
 [resource]
 script = ExtResource( 1 )
 Name = "pet_activated"
-UIScene = "tictactoe"
+UIScene = "res://TicTacToe.tscn"

@@ -125,7 +125,9 @@ namespace PereSkyroom
 			}
 
 			if (Input.IsActionJustPressed("interact"))
+			{
 				GlobalSettings.ActivateTarget(GetLookedAtSpatial(), this);
+			}
 
             if (Input.IsActionJustPressed("toggle_flight"))
             {

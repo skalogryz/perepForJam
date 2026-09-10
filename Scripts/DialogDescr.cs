@@ -12,7 +12,7 @@ namespace PereSkyroom
         [Export]
         public string Name;
         
-        [Export]
+        [Export(PropertyHint.File, "*.tscn")]
         public string UIScene;
     }
 }
