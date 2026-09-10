@@ -25,6 +25,7 @@ namespace PereSkyroom
 		[Export] public float PetPlayerReachDistance = 2.0f;
 		[Export] public float PetStoneSearchDistance = 3.0f;
 		[Export] public float PetSideLength = 0.5f;
+		[Export] public float PetScale = 1.0f;
 		[Export] public float PetMoveSpeed = 3.5f;
 		[Export] public float PetJumpSpeed = 7.0f;
 		[Export] public float PetFallY = -15.0f;
@@ -426,6 +427,7 @@ namespace PereSkyroom
 			pet.PlayerReachDistance = PetPlayerReachDistance;
 			pet.StoneSearchDistance = PetStoneSearchDistance;
 			pet.MoveSpeed = PetMoveSpeed;
+			pet.UniformVisualScale = PetScale;
 			pet.JumpSpeed = PetJumpSpeed;
 			pet.FallY = PetFallY;
 			pet.UseDefaultVisual = customVisual == null && PetScene == null;

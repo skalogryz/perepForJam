@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=2]
+[gd_scene load_steps=4 format=2]
 
 [ext_resource path="res://Scripts/Main.cs" type="Script" id=1]
 [ext_resource path="res://TriggerField.tscn" type="PackedScene" id=2]
+[ext_resource path="res://BeatHeadAdj.tscn" type="PackedScene" id=3]
 
 [node name="Main" type="Spatial"]
 script = ExtResource( 1 )
@@ -13,6 +14,7 @@ HudLabelsVisibleByDefault = false
 FpsVisibleByDefault = true
 SpeedBoostJumpMultiplier = 2.0
 StoneSpawnIntervalSeconds = 0.5
+PetScene = ExtResource( 3 )
 AccentWireframeColor = Color( 0.682353, 1, 0, 1 )
 
 [node name="RoomCenterTrigger" parent="." instance=ExtResource( 2 )]

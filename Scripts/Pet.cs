@@ -6,6 +6,7 @@ namespace PereSkyroom
 	public class Pet : KinematicBody
 	{
 		public const uint PetCollisionLayer = 1u << 3;
+		private const float PlayerFacingSpeedDegreesPerSecond = 720.0f;
 
 		public PlayerController Player;
 		public StoneDropManager StoneManager;
@@ -19,6 +20,7 @@ namespace PereSkyroom
 		public float StoneReachDistance = 0.4f;
 		public float FallY = -15.0f;
 		public float TriggerRadius = 1.5f;
+		public float UniformVisualScale = 1.0f;
 		public string TriggerEventName = "pet_activated";
 		public bool UseDefaultVisual = true;
 
@@ -60,7 +62,7 @@ namespace PereSkyroom
 				_targetRequiresJump = false;
 				_jumpStartedForTarget = false;
 				MoveWithGravity(Vector3.Zero, delta);
-				FacePoint(playerPosition);
+				FacePointSmoothly(playerPosition, delta);
 				return;
 			}
 
@@ -87,7 +89,7 @@ namespace PereSkyroom
 				_targetRequiresJump = false;
 				_jumpStartedForTarget = false;
 				if (GlobalTransform.origin.DistanceTo(playerPosition) <= PlayerReachDistance)
-					FacePoint(playerPosition);
+					FacePointSmoothly(playerPosition, delta);
 				MoveWithGravity(Vector3.Zero, delta);
 				return;
 			}
@@ -107,7 +109,7 @@ namespace PereSkyroom
 			}
 
 			MoveWithGravity(horizontalVelocity, delta);
-			FacePoint(targetPosition);
+			FacePointSmoothly(targetPosition, delta);
 		}
 
 		public void RespawnAtPlayer()
@@ -226,13 +228,21 @@ namespace PereSkyroom
 			CollisionMask = PlayerController.WorldCollisionLayer;
 		}
 
-		private void FacePoint(Vector3 point)
+		private void FacePointSmoothly(Vector3 point, float delta)
 		{
 			Vector3 direction = point - GlobalTransform.origin;
 			direction.y = 0.0f;
 			if (direction.LengthSquared() <= 0.0001f)
 				return;
-			Rotation = new Vector3(0.0f, Mathf.Atan2(-direction.x, -direction.z), 0.0f);
+
+			float targetYaw = Mathf.Atan2(-direction.x, -direction.z);
+			float currentYaw = Rotation.y;
+			float angleDifference = Mathf.PosMod(
+				targetYaw - currentYaw + Mathf.Pi,
+				Mathf.Pi * 2.0f) - Mathf.Pi;
+			float maximumStep = Mathf.Deg2Rad(PlayerFacingSpeedDegreesPerSecond) * delta;
+			float nextYaw = currentYaw + Mathf.Clamp(angleDifference, -maximumStep, maximumStep);
+			Rotation = new Vector3(0.0f, nextYaw, 0.0f);
 		}
 
 		private void BuildPhysicalBody()
@@ -247,8 +257,12 @@ namespace PereSkyroom
 				});
 			}
 
+			float visualScale = Mathf.Max(UniformVisualScale, 0.001f);
 			if (!UseDefaultVisual)
+			{
+				ScaleCustomVisualChildren(visualScale);
 				return;
+			}
 			var material = new SpatialMaterial
 			{
 				AlbedoColor = new Color(0.05f, 0.25f, 1.0f, 1.0f),
@@ -258,8 +272,37 @@ namespace PereSkyroom
 			{
 				Name = "Mesh",
 				Mesh = new CubeMesh { Size = Vector3.One * side },
-				MaterialOverride = material
+				MaterialOverride = material,
+				Scale = Vector3.One * visualScale
 			});
+		}
+
+		private void ScaleCustomVisualChildren(float scale)
+		{
+			foreach (Node child in GetChildren())
+			{
+				if (child is CollisionShape || child is TriggerField)
+					continue;
+				Spatial visual = child as Spatial;
+				if (visual != null)
+				{
+					visual.Scale *= scale;
+					continue;
+				}
+				ScaleFirstSpatialDescendants(child, scale);
+			}
+		}
+
+		private static void ScaleFirstSpatialDescendants(Node parent, float scale)
+		{
+			foreach (Node child in parent.GetChildren())
+			{
+				Spatial visual = child as Spatial;
+				if (visual != null)
+					visual.Scale *= scale;
+				else
+					ScaleFirstSpatialDescendants(child, scale);
+			}
 		}
 
 		private void BuildTriggerField()
