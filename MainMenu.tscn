@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=2]
+[gd_scene load_steps=4 format=2]
 
 [ext_resource path="res://Scripts/MainMenu.cs" type="Script" id=1]
 [ext_resource path="res://Resources/gameuitheme.tres" type="Theme" id=2]
+[ext_resource path="res://Scripts/ControlTranslationGroup.cs" type="Script" id=3]
 
 [node name="MainMenu" type="Control"]
 anchor_right = 1.0
@@ -34,7 +35,7 @@ custom_colors/font_color = Color( 0.682353, 1, 0, 1 )
 custom_colors/font_color_shadow = Color( 0, 0, 0, 0.85 )
 custom_constants/shadow_offset_x = 2
 custom_constants/shadow_offset_y = 2
-text = "PEREPETIA S REMNYAMI"
+text = "Remni"
 align = 1
 valign = 1
 
@@ -44,7 +45,7 @@ margin_right = 360.0
 margin_bottom = 148.0
 rect_min_size = Vector2( 360, 58 )
 theme = ExtResource( 2 )
-text = "START GAME"
+text = "Start Game"
 
 [node name="LanguageButton" type="Button" parent="Center/VBox"]
 margin_top = 166.0
@@ -52,7 +53,11 @@ margin_right = 360.0
 margin_bottom = 224.0
 rect_min_size = Vector2( 360, 58 )
 theme = ExtResource( 2 )
-text = "LANGUAGE: ENGLISH"
+text = "Language"
+
+[node name="Translations" type="Node" parent="."]
+script = ExtResource( 3 )
+TrackedControlPaths = [ NodePath("../Center/VBox/TitleLabel"), NodePath("../Center/VBox/StartButton"), NodePath("../Center/VBox/LanguageButton") ]
 
 [connection signal="pressed" from="Center/VBox/StartButton" to="." method="OnStartButtonPressed"]
 [connection signal="pressed" from="Center/VBox/LanguageButton" to="." method="OnLanguageButtonPressed"]

@@ -46,6 +46,7 @@ namespace PereSkyroom
 		{
 			CurrentLanguageCode = string.Equals(
 				languageCode, "ru", StringComparison.OrdinalIgnoreCase) ? "ru" : "en";
+			TranslationServer.SetLocale(CurrentLanguageCode);
 		}
 
 		public void PublishTriggerEvent(string eventName, PlayerController player, TriggerField triggerField)

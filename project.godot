@@ -132,10 +132,19 @@ toggle_sky_sphere_noise={
  ]
 }
 
+[internationalization]
+
+locale/fallback="en"
+locale/translations=PoolStringArray( "res://Localization/en.po", "res://Localization/ru.po" )
+
 [layer_names]
 
 3d_physics/layer_1="World"
 3d_physics/layer_2="PlayerTrigger"
+
+[locale]
+
+translations=PoolStringArray( "res://Localization/en.po", "res://Localization/ru.po" )
 
 [mono]
 
