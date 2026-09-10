@@ -11,6 +11,15 @@ namespace PereSkyroom
 		public delegate void TriggerEvent(string eventName, Node player, Node triggerField);
 
 		public static GlobalSettings inst = null;
+		public static string CurrentLanguageCode { get; private set; } = string.Empty;
+		public static bool IsRussianLanguage
+		{
+			get
+			{
+				EnsureLanguageSelected();
+				return CurrentLanguageCode == "ru";
+			}
+		}
 
 		[Export]
 		public List<DialogDescr> Dialogs = new List<DialogDescr>();
@@ -22,6 +31,21 @@ namespace PereSkyroom
 			GD.Print("starting the global settings");
 			if (inst == null)
 				inst = this;
+			EnsureLanguageSelected();
+		}
+
+		public static void EnsureLanguageSelected()
+		{
+			if (!string.IsNullOrEmpty(CurrentLanguageCode))
+				return;
+			string systemLocale = OS.GetLocale() ?? string.Empty;
+			SetLanguage(systemLocale.StartsWith("ru", StringComparison.OrdinalIgnoreCase) ? "ru" : "en");
+		}
+
+		public static void SetLanguage(string languageCode)
+		{
+			CurrentLanguageCode = string.Equals(
+				languageCode, "ru", StringComparison.OrdinalIgnoreCase) ? "ru" : "en";
 		}
 
 		public void PublishTriggerEvent(string eventName, PlayerController player, TriggerField triggerField)
