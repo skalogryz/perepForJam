@@ -47,14 +47,14 @@ valign = 1
 [node name="BoardCenter" type="CenterContainer" parent="GameUI/Center/GamePanel/Layout"]
 margin_top = 50.0
 margin_right = 422.0
-margin_bottom = 450.0
+margin_bottom = 512.0
 size_flags_vertical = 3
 
 [node name="BoardGrid" type="GridContainer" parent="GameUI/Center/GamePanel/Layout/BoardCenter"]
 margin_left = 40.0
-margin_top = 29.0
+margin_top = 60.0
 margin_right = 382.0
-margin_bottom = 371.0
+margin_bottom = 402.0
 custom_constants/vseparation = 6
 custom_constants/hseparation = 6
 columns = 3
@@ -115,11 +115,3 @@ margin_top = 232.0
 margin_right = 342.0
 margin_bottom = 342.0
 rect_min_size = Vector2( 110, 110 )
-
-[node name="ResetButton" type="Button" parent="GameUI/Center/GamePanel/Layout"]
-margin_top = 464.0
-margin_right = 422.0
-margin_bottom = 512.0
-rect_min_size = Vector2( 0, 48 )
-theme = ExtResource( 2 )
-text = "NEW GAME"

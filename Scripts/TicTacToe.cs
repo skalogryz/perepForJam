@@ -8,6 +8,7 @@ namespace PereSkyroom
 		private const int Empty = 0;
 		private const int Player = 1;
 		private const int Computer = 2;
+		private const float ResultDelaySeconds = 1.0f;
 
 		private readonly int[] _board = new int[9];
 		private readonly Button[] _cellButtons = new Button[9];
@@ -30,8 +31,8 @@ namespace PereSkyroom
 				button.Connect("pressed", this, nameof(OnCellPressed), new Godot.Collections.Array { index });
 			}
 
-			GetNode<Button>("GameUI/Center/GamePanel/Layout/ResetButton")
-				.Connect("pressed", this, nameof(StartNewGame));
+			//GetNode<Button>("GameUI/Center/GamePanel/Layout/ResetButton")
+			//	.Connect("pressed", this, nameof(StartNewGame));
 
 			_random.Randomize();
 			StartNewGame();
@@ -111,6 +112,7 @@ namespace PereSkyroom
 				_gameOver = true;
 				SetBoardInputEnabled(false);
 				_statusLabel.Text = winner == Player ? "YOU WIN!" : "COMPUTER WINS";
+				HandleFinishedGame(winner);
 				return true;
 			}
 
@@ -124,6 +126,19 @@ namespace PereSkyroom
 			SetBoardInputEnabled(false);
 			_statusLabel.Text = "DRAW";
 			return true;
+		}
+
+		private async void HandleFinishedGame(int winner)
+		{
+			int expectedRound = _roundVersion;
+			await ToSignal(GetTree().CreateTimer(ResultDelaySeconds, true), "timeout");
+			if (!IsInsideTree() || expectedRound != _roundVersion || !_gameOver)
+				return;
+
+			if (winner == Player)
+				GlobalSettings.DialogClosing();
+			else if (winner == Computer)
+				StartNewGame();
 		}
 
 		private int FindWinner()
