@@ -11,8 +11,11 @@ namespace PereSkyroom
 		public delegate void TriggerEvent(string eventName, Node player, Node triggerField);
 		[Signal]
 		public delegate void DialogCloseRequested();
+		[Signal]
+		public delegate void BoostModeChanged(bool enabled);
 
 		public static GlobalSettings inst = null;
+		public static bool BoostModeEnabled { get; private set; }
 		public static string CurrentLanguageCode { get; private set; } = string.Empty;
 		public static bool IsRussianLanguage
 		{
@@ -102,6 +105,15 @@ namespace PereSkyroom
 			if (inst == null || !IsInstanceValid(inst))
 				return;
 			inst.EmitSignal(nameof(DialogCloseRequested));
+		}
+
+		public static void SetBoostMode(bool enabled)
+		{
+			if (BoostModeEnabled == enabled)
+				return;
+			BoostModeEnabled = enabled;
+			if (inst != null && IsInstanceValid(inst))
+				inst.EmitSignal(nameof(BoostModeChanged), enabled);
 		}
 	}
 }

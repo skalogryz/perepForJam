@@ -62,6 +62,7 @@ namespace PereSkyroom
         {
             BuildBody();
             BindHud();
+			GlobalSettings.SetBoostMode(_speedBoostEnabled);
             Input.MouseMode = Input.MouseModeEnum.Captured;
             UpdateHud();
 			UpdatePlayerStatsHud();
@@ -120,6 +121,7 @@ namespace PereSkyroom
 			if (Input.IsActionJustPressed("toggle_speed_boost"))
 			{
 				_speedBoostEnabled = !_speedBoostEnabled;
+				GlobalSettings.SetBoostMode(_speedBoostEnabled);
 				UpdatePlayerStatsHud();
 				ShowMessage(_speedBoostEnabled ? "SPEED BOOST ENABLED" : "NORMAL SPEED");
 			}

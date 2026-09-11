@@ -498,11 +498,11 @@ namespace PereSkyroom
 
 		private void BuildPlatforms()
 		{
-			AddBox("Platform01", new Vector3(-5.5f, 1.0f, 2.5f), new Vector3(4.5f, 0.5f, 4.0f), _platformColor);
-			AddBox("Platform02", new Vector3(0.0f, 2.2f, -1.5f), new Vector3(4.0f, 0.5f, 4.0f), _platformColor);
-			AddBox("Platform03", new Vector3(5.4f, 3.4f, -5.0f), new Vector3(4.5f, 0.5f, 4.0f), _platformColor);
-			AddBox("Platform04", new Vector3(-3.5f, 4.6f, -8.2f), new Vector3(5.0f, 0.5f, 3.2f), _platformColor);
-			AddBox("FloatingStep", new Vector3(6.5f, 1.2f, 5.2f), new Vector3(2.4f, 0.45f, 2.4f), new Color(0.55f, 0.3f, 0.72f));
+			AddPlatform("Platform01", new Vector3(-5.5f, 1.0f, 2.5f), new Vector3(4.5f, 0.5f, 4.0f), _platformColor);
+			AddPlatform("Platform02", new Vector3(0.0f, 2.2f, -1.5f), new Vector3(4.0f, 0.5f, 4.0f), _platformColor);
+			AddPlatform("Platform03", new Vector3(5.4f, 3.4f, -5.0f), new Vector3(4.5f, 0.5f, 4.0f), _platformColor);
+			AddPlatform("Platform04", new Vector3(-3.5f, 4.6f, -8.2f), new Vector3(5.0f, 0.5f, 3.2f), _platformColor);
+			AddPlatform("FloatingStep", new Vector3(6.5f, 1.2f, 5.2f), new Vector3(2.4f, 0.45f, 2.4f), new Color(0.55f, 0.3f, 0.72f), true);
 		}
 
 		private List<ShootTarget> BuildTargets()
@@ -779,6 +779,27 @@ namespace PereSkyroom
 		private void AddBox(string name, Vector3 position, Vector3 size, Color color)
 		{
 			var body = new StaticBody { Name = name, Translation = position };
+			AddBoxGeometry(body, size, color);
+		}
+
+		private void AddPlatform(
+			string name,
+			Vector3 position,
+			Vector3 size,
+			Color color,
+			bool specialVisibility = false)
+		{
+			var body = new PlatformProps
+			{
+				Name = name,
+				Translation = position,
+				SpecialVisibility = specialVisibility
+			};
+			AddBoxGeometry(body, size, color);
+		}
+
+		private void AddBoxGeometry(StaticBody body, Vector3 size, Color color)
+		{
 			var shape = new CollisionShape { Shape = new BoxShape { Extents = size * 0.5f } };
 			var mesh = new MeshInstance
 			{
