@@ -10,7 +10,7 @@ config_version=4
 
 [application]
 
-config/name="Perepetia s Remnyami"
+config/name="Straitum"
 run/main_scene="res://MainMenu.tscn"
 
 [autoload]
