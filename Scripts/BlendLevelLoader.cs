@@ -342,7 +342,8 @@ namespace PereSkyroom
 				return false;
 
 			for (int i = 0; i < prefixes.Length; i++)
-				if (name.StartsWith(prefixes[i], StringComparison.OrdinalIgnoreCase))
+				if (name.StartsWith(prefixes[i], StringComparison.OrdinalIgnoreCase)
+					|| name.StartsWith(prefixes[i], StringComparison.InvariantCultureIgnoreCase))
 					return true;
 
 			return false;
