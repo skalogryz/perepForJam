@@ -55,6 +55,18 @@ namespace PereSkyroom
 			}
 
 			Vector3 playerPosition = Player.GlobalTransform.origin;
+			if (Player.IsOnHook)
+			{
+				_targetStone = null;
+				_targetRequiresJump = false;
+				_jumpStartedForTarget = false;
+				_collisionlessJumpInProgress = false;
+				CollisionMask = PlayerController.WorldCollisionLayer;
+				MoveWithGravity(Vector3.Zero, delta);
+				FacePointSmoothly(playerPosition, delta);
+				return;
+			}
+
 			float distanceToPlayer = GlobalTransform.origin.DistanceTo(playerPosition);
 			if (distanceToPlayer <= PlayerReachDistance)
 			{

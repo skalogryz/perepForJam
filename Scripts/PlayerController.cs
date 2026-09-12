@@ -44,10 +44,15 @@ namespace PereSkyroom
 		private int _score;
 		private bool _fpsVisible;
 		private float _fpsRefreshTimer;
+		private PlatformProps _hookPlatform;
 
 		public bool WeaponVisible { get { return _weaponView != null && _weaponView.Visible; } }
 		public bool HudLabelsVisible { get { return _hud != null && _hud.Visible; } }
 		public bool FpsVisible { get { return _fpsVisible; } }
+		public bool IsOnHook
+		{
+			get { return _hookPlatform != null && IsInstanceValid(_hookPlatform); }
+		}
 		public Vector3 HeadGlobalPosition
 		{
 			get
@@ -150,6 +155,16 @@ namespace PereSkyroom
 				SetHudLabelsVisible(!HudLabelsVisible);
 				#endif
 			}
+
+			if (IsOnHook)
+			{
+				ProcessHookMovement(delta);
+				if (Input.IsActionJustPressed("shoot") && Input.MouseMode == Input.MouseModeEnum.Captured)
+					Shoot();
+				return;
+			}
+			if (_hookPlatform != null)
+				_hookPlatform = null;
 
             Vector2 input = new Vector2(
                 Input.GetActionStrength("move_right") - Input.GetActionStrength("move_left"),
@@ -335,12 +350,106 @@ namespace PereSkyroom
 
 		public void PlaceAt(Vector3 position)
 		{
+			DetachFromHook(false);
 			Translation = position;
 			Rotation = Vector3.Zero;
 			_pitch = 0.0f;
 			if (_head != null)
 				_head.Rotation = Vector3.Zero;
 			_velocity = Vector3.Zero;
+		}
+
+		public bool TryAttachToHook(PlatformProps hook)
+		{
+			if (hook == null || !IsInstanceValid(hook) || !hook.IsHook || IsOnHook)
+				return false;
+
+			_hookPlatform = hook;
+			_velocity = Vector3.Zero;
+			hook.SetPlayerAttached(this, true);
+			SnapHeadToHook();
+			return true;
+		}
+
+		private void ProcessHookMovement(float delta)
+		{
+			if (Input.IsActionJustPressed("fly_down"))
+			{
+				DetachFromHook(true);
+				return;
+			}
+
+			if (Input.IsActionJustPressed("jump_or_up"))
+			{
+				Vector3 jumpDirection = GetHookJumpDirection();
+				float movementMultiplier = _speedBoostEnabled ? SpeedBoostMovementMultiplier : 1.0f;
+				float jumpMultiplier = _speedBoostEnabled ? SpeedBoostJumpMultiplier : 1.0f;
+				DetachFromHook(true);
+				_velocity = jumpDirection * WalkSpeed * movementMultiplier;
+				_velocity.y = JumpSpeed * jumpMultiplier;
+				_velocity = MoveAndSlide(_velocity, Vector3.Up, true, 4, Mathf.Deg2Rad(55.0f));
+				return;
+			}
+
+			Vector3 headOffset = HeadGlobalPosition - GlobalTransform.origin;
+			Vector3 desiredOrigin = _hookPlatform.GlobalTransform.origin - headOffset;
+			Vector3 displacement = desiredOrigin - GlobalTransform.origin;
+			if (displacement.LengthSquared() > 0.000001f)
+			{
+				KinematicCollision collision = MoveAndCollide(displacement, true, true, true);
+				if (collision != null && collision.Collider is StaticBody
+					&& collision.Collider != _hookPlatform)
+				{
+					DetachFromHook(true);
+					return;
+				}
+			}
+
+			Transform transform = GlobalTransform;
+			transform.origin = desiredOrigin;
+			GlobalTransform = transform;
+			_velocity = Vector3.Zero;
+		}
+
+		private Vector3 GetHookJumpDirection()
+		{
+			Vector2 input = new Vector2(
+				Input.GetActionStrength("move_right") - Input.GetActionStrength("move_left"),
+				Input.GetActionStrength("move_backward") - Input.GetActionStrength("move_forward"));
+			if (input.Length() > 1.0f)
+				input = input.Normalized();
+
+			Vector3 direction = GlobalTransform.basis.x * input.x + GlobalTransform.basis.z * input.y;
+			direction.y = 0.0f;
+			if (direction.LengthSquared() <= 0.0001f)
+			{
+				direction = -GlobalTransform.basis.z;
+				direction.y = 0.0f;
+			}
+			return direction.Normalized();
+		}
+
+		private void SnapHeadToHook()
+		{
+			if (!IsOnHook)
+				return;
+			Vector3 headOffset = HeadGlobalPosition - GlobalTransform.origin;
+			Transform transform = GlobalTransform;
+			transform.origin = _hookPlatform.GlobalTransform.origin - headOffset;
+			GlobalTransform = transform;
+		}
+
+		private void DetachFromHook(bool ignoreUntilExit)
+		{
+			PlatformProps hook = _hookPlatform;
+			_hookPlatform = null;
+			_velocity = Vector3.Zero;
+			if (hook == null || !IsInstanceValid(hook))
+				return;
+
+			hook.SetPlayerAttached(this, false);
+			if (ignoreUntilExit)
+				hook.IgnorePlayerUntilExit(this);
 		}
 
 		public void ShowSystemMessage(string text)

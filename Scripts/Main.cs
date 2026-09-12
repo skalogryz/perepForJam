@@ -95,6 +95,7 @@ namespace PereSkyroom
 			BuildPlatforms();
 			List<ShootTarget> targets = BuildTargets();
 			_player = BuildPlayer();
+			RegisterPlayerWithPlatforms(_levelRoot, _player);
 			_stoneDropManager = BuildStoneDropManager(_player);
 			_pet = BuildPet(_player, _stoneDropManager);
 			_sideCameraMode = BuildSideCameraMode(_player);
@@ -503,6 +504,13 @@ namespace PereSkyroom
 			AddPlatform("Platform03", new Vector3(5.4f, 3.4f, -5.0f), new Vector3(4.5f, 0.5f, 4.0f), _platformColor);
 			AddPlatform("Platform04", new Vector3(-3.5f, 4.6f, -8.2f), new Vector3(5.0f, 0.5f, 3.2f), _platformColor);
 			AddPlatform("FloatingStep", new Vector3(6.5f, 1.2f, 5.2f), new Vector3(2.4f, 0.45f, 2.4f), new Color(0.55f, 0.3f, 0.72f), true);
+			AddPlatform(
+				"HookPlatform",
+				new Vector3(0.0f, 2.75f, 5.2f),
+				new Vector3(2.5f, 0.5f, 1.2f),
+				new Color(0.05f, 0.85f, 0.32f),
+				false,
+				true);
 		}
 
 		private List<ShootTarget> BuildTargets()
@@ -787,15 +795,30 @@ namespace PereSkyroom
 			Vector3 position,
 			Vector3 size,
 			Color color,
-			bool specialVisibility = false)
+			bool specialVisibility = false,
+			bool isHook = false)
 		{
 			var body = new PlatformProps
 			{
 				Name = name,
 				Translation = position,
-				SpecialVisibility = specialVisibility
+				SpecialVisibility = specialVisibility,
+				IsHook = isHook
 			};
 			AddBoxGeometry(body, size, color);
+		}
+
+		private static void RegisterPlayerWithPlatforms(Node root, PlayerController player)
+		{
+			if (root == null || player == null)
+				return;
+
+			PlatformProps platform = root as PlatformProps;
+			if (platform != null)
+				platform.RegisterPlayer(player);
+
+			foreach (Node child in root.GetChildren())
+				RegisterPlayerWithPlatforms(child, player);
 		}
 
 		private void AddBoxGeometry(StaticBody body, Vector3 size, Color color)
