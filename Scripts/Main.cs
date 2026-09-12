@@ -65,6 +65,7 @@ namespace PereSkyroom
 
 		private Spatial _levelRoot;
 		private PlayerController _player;
+		private WeaponHud _weaponHud;
 		private StoneDropManager _stoneDropManager;
 		private Pet _pet;
 		private SideCameraMode _sideCameraMode;
@@ -95,6 +96,8 @@ namespace PereSkyroom
 			BuildPlatforms();
 			List<ShootTarget> targets = BuildTargets();
 			_player = BuildPlayer();
+			_weaponHud = GetNode<WeaponHud>("WeaponHUD");
+			_player.SetWeaponHud(_weaponHud);
 			RegisterPlayerWithPlatforms(_levelRoot, _player);
 			_stoneDropManager = BuildStoneDropManager(_player);
 			_pet = BuildPet(_player, _stoneDropManager);
