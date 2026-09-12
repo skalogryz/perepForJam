@@ -1,10 +1,17 @@
 using Godot;
+using System;
 using System.Collections.Generic;
 
 namespace PereSkyroom
 {
 	public class Pet : KinematicBody
 	{
+		private sealed class WalkAnimationBinding
+		{
+			public AnimationPlayer Player;
+			public string AnimationName;
+		}
+
 		public const uint PetCollisionLayer = 1u << 3;
 		private const float PlayerFacingSpeedDegreesPerSecond = 720.0f;
 
@@ -31,6 +38,9 @@ namespace PereSkyroom
 		private bool _jumpStartedForTarget;
 		private bool _collisionlessJumpInProgress;
 		private float _jumpLandingCenterY;
+		private readonly List<WalkAnimationBinding> _walkAnimations
+			= new List<WalkAnimationBinding>();
+		private bool _walkAnimationEnabled;
 
 		public override void _Ready()
 		{
@@ -41,12 +51,16 @@ namespace PereSkyroom
 
 			BuildPhysicalBody();
 			BuildTriggerField();
+			FindWalkAnimations(this);
 		}
 
 		public override void _PhysicsProcess(float delta)
 		{
 			if (Player == null || !IsInstanceValid(Player))
+			{
+				SetWalkAnimationsEnabled(false);
 				return;
+			}
 
 			if (GlobalTransform.origin.y < FallY)
 			{
@@ -137,6 +151,7 @@ namespace PereSkyroom
 			_jumpStartedForTarget = false;
 			_collisionlessJumpInProgress = false;
 			CollisionMask = PlayerController.WorldCollisionLayer;
+			SetWalkAnimationsEnabled(false);
 		}
 
 		private void SelectTargetStone(Vector3 playerPosition)
@@ -199,6 +214,7 @@ namespace PereSkyroom
 
 		private void MoveWithGravity(Vector3 horizontalVelocity, float delta)
 		{
+			Vector3 previousPosition = GlobalTransform.origin;
 			float previousY = GlobalTransform.origin.y;
 			_velocity.x = horizontalVelocity.x;
 			_velocity.z = horizontalVelocity.z;
@@ -208,6 +224,99 @@ namespace PereSkyroom
 				_velocity.y = 0.0f;
 			_velocity = MoveAndSlide(_velocity, Vector3.Up, true, 4, Mathf.Deg2Rad(55.0f));
 			TryFinishCollisionlessJump(previousY);
+			Vector3 displacement = GlobalTransform.origin - previousPosition;
+			SetWalkAnimationsEnabled(
+				new Vector2(displacement.x, displacement.z).LengthSquared() > 0.000001f);
+		}
+
+		private void FindWalkAnimations(Node parent)
+		{
+			foreach (Node child in parent.GetChildren())
+			{
+				AnimationPlayer animationPlayer = child as AnimationPlayer;
+				if (animationPlayer != null)
+					RegisterWalkAnimations(animationPlayer);
+
+				FindWalkAnimations(child);
+			}
+		}
+
+		private void RegisterWalkAnimations(AnimationPlayer sourcePlayer)
+		{
+			var animationNames = new List<string>();
+			foreach (string animationName in sourcePlayer.GetAnimationList())
+			{
+				if (animationName.StartsWith("walk", StringComparison.OrdinalIgnoreCase))
+					animationNames.Add(animationName);
+			}
+
+			for (int i = 0; i < animationNames.Count; i++)
+			{
+				string animationName = animationNames[i];
+				AnimationPlayer playbackPlayer = sourcePlayer;
+				if (i > 0)
+				{
+					Node playbackParent = sourcePlayer.GetParent();
+					Animation animation = sourcePlayer.GetAnimation(animationName);
+					if (playbackParent == null || animation == null)
+						continue;
+
+					playbackPlayer = new AnimationPlayer
+					{
+						Name = sourcePlayer.Name + "_WalkParallel" + i,
+						RootNode = sourcePlayer.RootNode,
+						PlaybackSpeed = sourcePlayer.PlaybackSpeed
+					};
+					playbackPlayer.AddAnimation(animationName, animation);
+					playbackParent.AddChild(playbackPlayer);
+				}
+
+				_walkAnimations.Add(new WalkAnimationBinding
+				{
+					Player = playbackPlayer,
+					AnimationName = animationName
+				});
+			}
+		}
+
+		private void SetWalkAnimationsEnabled(bool enabled)
+		{
+			if (_walkAnimationEnabled == enabled)
+			{
+				if (enabled)
+					EnsureWalkAnimationsPlaying();
+				return;
+			}
+
+			_walkAnimationEnabled = enabled;
+			if (enabled)
+			{
+				EnsureWalkAnimationsPlaying();
+				return;
+			}
+
+			for (int i = 0; i < _walkAnimations.Count; i++)
+			{
+				AnimationPlayer animationPlayer = _walkAnimations[i].Player;
+				if (animationPlayer != null && IsInstanceValid(animationPlayer))
+					animationPlayer.Stop();
+			}
+		}
+
+		private void EnsureWalkAnimationsPlaying()
+		{
+			for (int i = 0; i < _walkAnimations.Count; i++)
+			{
+				WalkAnimationBinding binding = _walkAnimations[i];
+				AnimationPlayer animationPlayer = binding.Player;
+				if (animationPlayer == null || !IsInstanceValid(animationPlayer))
+					continue;
+				if (!animationPlayer.IsPlaying()
+					|| animationPlayer.CurrentAnimation != binding.AnimationName)
+				{
+					animationPlayer.Play(binding.AnimationName);
+				}
+			}
 		}
 
 		private void BeginCollisionlessJump(DroppedStone targetStone)
