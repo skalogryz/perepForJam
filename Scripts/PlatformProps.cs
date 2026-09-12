@@ -96,6 +96,8 @@ namespace PereSkyroom
 					Transform = source.Transform,
 					Disabled = source.Disabled
 				});
+				// disabling the object collission shape
+				source.Disabled = true;
 			}
 
 			AddChild(_hookArea);
