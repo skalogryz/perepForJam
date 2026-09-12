@@ -39,6 +39,10 @@ Boost Sprite 1/2`; второй спрайт каждого состояния �
 `PlayerStatsHUD` показывает состояние скорости через редактируемый `BoostStateSprite`
 вместо Label. Текстуры `Normal Sprite` и `Boost Sprite` назначаются на самом
 `PlayerStatsHUD`; встроенные индикаторы находятся в формате PNG.
+Материал `player_stats_palette_material.tres` сводит непрозрачные пиксели индикатора
+строго к `black_color`, `dark_color` и `accent_color`. Порог чёрного, распознавание
+зелёного accent и порог альфы настраиваются параметрами материала; полупрозрачные края
+отбрасываются.
 
 Платформы, создаваемые в `BuildPlatforms`, используют `PlatformProps`. При включённом
 `SpecialVisibility` визуальная часть платформы отображается только в режиме BOOST; её
