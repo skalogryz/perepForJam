@@ -73,10 +73,12 @@ namespace PereSkyroom
 					meshCache.Add(blendObject.Mesh.DataBlockAddress, builtMesh);
 				}
 
-				var body = new StaticBody
+				var body = new PlatformProps
 				{
 					Name = SafeNodeName(blendObject.Name),
-					Transform = objectTransform
+					Transform = objectTransform,
+					IsHook = HasPrefix(blendObject.Name, "кр", "hook"),
+					SpecialVisibility = HasPrefix(blendObject.Name, "ск", "hid")
 				};
 				var meshInstance = new MeshInstance
 				{
@@ -332,6 +334,18 @@ namespace PereSkyroom
 		private static string SafeNodeName(string name)
 		{
 			return string.IsNullOrEmpty(name) ? "BlendObject" : name.Replace("/", "_");
+		}
+
+		private static bool HasPrefix(string name, params string[] prefixes)
+		{
+			if (string.IsNullOrEmpty(name))
+				return false;
+
+			for (int i = 0; i < prefixes.Length; i++)
+				if (name.StartsWith(prefixes[i], StringComparison.OrdinalIgnoreCase))
+					return true;
+
+			return false;
 		}
 	}
 }
