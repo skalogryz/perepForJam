@@ -28,8 +28,7 @@ namespace PereSkyroom
 		private Label _sideCameraLabel;
 		private Label _messageLabel;
 		private Label _fpsLabel;
-		private CanvasLayer _playerStatsHud;
-		private Label _statsBoostLabel;
+		private PlayerStatsHud _playerStatsHud;
         private Vector3 _velocity = Vector3.Zero;
         private float _pitch;
 		private bool _flightMode;
@@ -395,14 +394,12 @@ namespace PereSkyroom
 			_fpsLabel = _hud.GetNode<Label>("FpsLabel");
 			_fpsVisible = _fpsLabel.Visible;
 
-			_playerStatsHud = hudOwner.GetNode<CanvasLayer>("PlayerStatsHUD");
-			Node statsPanel = _playerStatsHud.GetNode("StatsPanel");
-			_statsBoostLabel = statsPanel.GetNode<Label>("BoostLabel");
+			_playerStatsHud = hudOwner.GetNode<PlayerStatsHud>("PlayerStatsHUD");
         }
 
 		private void UpdatePlayerStatsHud()
 		{
-			_statsBoostLabel.Text = _speedBoostEnabled ? "BOOST: ON" : "BOOST: OFF";
+			_playerStatsHud.SetBoostEnabled(_speedBoostEnabled);
 		}
 
         private void Shoot()

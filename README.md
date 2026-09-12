@@ -36,6 +36,10 @@ Boost Sprite 1/2`; второй спрайт каждого состояния �
 Поля `Normal Canvas Offset`, `Boost Canvas Offset`, `Hook Normal Canvas Offset` и
 `Hook Boost Canvas Offset` задают отдельный `CanvasLayer.Offset` для каждого набора.
 
+`PlayerStatsHUD` показывает состояние скорости через редактируемый `BoostStateSprite`
+вместо Label. Текстуры `Normal Sprite` и `Boost Sprite` назначаются на самом
+`PlayerStatsHUD`; встроенные индикаторы находятся в формате PNG.
+
 Платформы, создаваемые в `BuildPlatforms`, используют `PlatformProps`. При включённом
 `SpecialVisibility` визуальная часть платформы отображается только в режиме BOOST; её
 коллизия остаётся активной независимо от видимости.
