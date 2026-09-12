@@ -378,7 +378,8 @@ namespace PereSkyroom
 				_loadedBlendLevelPath = path;
 				GD.Print("Loaded .blend level: " + path + " ("
 					+ loaded.MeshObjectCount + " mesh objects, "
-					+ loaded.LightObjectCount + " light objects).");
+					+ loaded.LightObjectCount + " light objects, "
+					+ loaded.PathObjectCount + " movement paths).");
 				if (showMessage)
 					_player.ShowSystemMessage("BLEND LEVEL LOADED: " + loaded.MeshObjectCount + " OBJECTS");
 				return true;

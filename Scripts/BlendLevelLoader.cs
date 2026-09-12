@@ -13,6 +13,7 @@ namespace PereSkyroom
 		public Vector3 PlayerSpawn;
 		public int MeshObjectCount;
 		public int LightObjectCount;
+		public int PathObjectCount;
 	}
 
 	public static class BlendLevelLoader
@@ -39,6 +40,8 @@ namespace PereSkyroom
 			var meshCache = new Dictionary<ulong, MeshBuildResult>();
 			var textureCache = new Dictionary<string, Texture>(StringComparer.OrdinalIgnoreCase);
 			var worldTransformCache = new Dictionary<BlendObjectInfo, Transform>();
+			var hooksByNumber = new Dictionary<int, PlatformProps>();
+			var movementPathObjects = new List<BlendObjectInfo>();
 			Vector3 spawn = new Vector3(0, 2, 0);
 			bool hasSpawn = false;
 			bool hasCameraSpawn = false;
@@ -49,6 +52,11 @@ namespace PereSkyroom
 			{
 				if (blendObject.Name.StartsWith("IGNORE_", StringComparison.OrdinalIgnoreCase))
 					continue;
+				if (HasPrefix(blendObject.Name, "уз"))
+				{
+					movementPathObjects.Add(blendObject);
+					continue;
+				}
 
 				Transform objectTransform = GetWorldTransform(
 					blendObject, worldTransformCache, new HashSet<BlendObjectInfo>());
@@ -118,8 +126,17 @@ namespace PereSkyroom
 					body.AddChild(collision);
 				}
 				root.AddChild(body);
+				int hookNumber;
+				if (isHook && TryFindInteger(blendObject.Name, out hookNumber)
+					&& !hooksByNumber.ContainsKey(hookNumber))
+				{
+					hooksByNumber.Add(hookNumber, body);
+				}
 				meshCount++;
 			}
+
+			int pathCount = BuildMovementPaths(
+				root, movementPathObjects, hooksByNumber, worldTransformCache);
 
 			if (meshCount == 0)
 			{
@@ -132,8 +149,102 @@ namespace PereSkyroom
 				Root = root,
 				PlayerSpawn = spawn,
 				MeshObjectCount = meshCount,
-				LightObjectCount = lightCount
+				LightObjectCount = lightCount,
+				PathObjectCount = pathCount
 			};
+		}
+
+		private static int BuildMovementPaths(
+			Spatial root,
+			List<BlendObjectInfo> pathObjects,
+			Dictionary<int, PlatformProps> hooksByNumber,
+			Dictionary<BlendObjectInfo, Transform> worldTransformCache)
+		{
+			var assignedHooks = new HashSet<PlatformProps>();
+			int pathCount = 0;
+			for (int i = 0; i < pathObjects.Count; i++)
+			{
+				BlendObjectInfo pathObject = pathObjects[i];
+				int objectNumber;
+				PlatformProps hook;
+				if (!TryFindInteger(pathObject.Name, out objectNumber)
+					|| !hooksByNumber.TryGetValue(objectNumber, out hook)
+					|| assignedHooks.Contains(hook))
+				{
+					continue;
+				}
+
+				Transform pathTransform = GetWorldTransform(
+					pathObject, worldTransformCache, new HashSet<BlendObjectInfo>());
+				Path movementPath = BuildMovementPath(pathObject, pathTransform);
+				if (movementPath == null)
+					continue;
+
+				root.AddChild(movementPath);
+				hook.MovementPath = hook.GetPathTo(movementPath);
+				hook.IsMoveOnPath = true;
+				assignedHooks.Add(hook);
+				pathCount++;
+			}
+			return pathCount;
+		}
+
+		private static Path BuildMovementPath(
+			BlendObjectInfo pathObject,
+			Transform pathTransform)
+		{
+			BlendCurveInfo sourceCurve = pathObject.Curve;
+			if (sourceCurve == null || sourceCurve.Splines == null)
+				return null;
+
+			for (int splineIndex = 0; splineIndex < sourceCurve.Splines.Count; splineIndex++)
+			{
+				BlendSplineInfo spline = sourceCurve.Splines[splineIndex];
+				var curve = new Curve3D();
+				int pointCount = 0;
+				if (spline.Type == BlendSplineType.Bezier && spline.BezierPoints != null)
+				{
+					for (int i = 0; i < spline.BezierPoints.Count; i++)
+					{
+						BlendBezierPointInfo sourcePoint = spline.BezierPoints[i];
+						Vector3 position = ConvertVertex(sourcePoint.Coordinate);
+						Vector3 incoming = ConvertVertex(sourcePoint.LeftHandle) - position;
+						Vector3 outgoing = ConvertVertex(sourcePoint.RightHandle) - position;
+						curve.AddPoint(position, incoming, outgoing);
+						pointCount++;
+					}
+					if (spline.IsCyclic && pointCount > 1)
+					{
+						BlendBezierPointInfo first = spline.BezierPoints[0];
+						Vector3 position = ConvertVertex(first.Coordinate);
+						curve.AddPoint(
+							position,
+							ConvertVertex(first.LeftHandle) - position,
+							ConvertVertex(first.RightHandle) - position);
+					}
+				}
+				else if (spline.Type == BlendSplineType.Poly && spline.Points != null)
+				{
+					for (int i = 0; i < spline.Points.Count; i++)
+					{
+						curve.AddPoint(ConvertVertex(spline.Points[i].Coordinate));
+						pointCount++;
+					}
+					if (spline.IsCyclic && pointCount > 1)
+						curve.AddPoint(ConvertVertex(spline.Points[0].Coordinate));
+				}
+
+				if (pointCount >= 2)
+				{
+					return new Path
+					{
+						Name = SafeNodeName(pathObject.Name),
+						Transform = pathTransform,
+						Curve = curve
+					};
+				}
+			}
+			return null;
 		}
 
 		private static Light BuildLight(BlendObjectInfo blendObject, Transform objectTransform)
@@ -451,6 +562,32 @@ namespace PereSkyroom
 				if (name.StartsWith(prefixes[i], StringComparison.OrdinalIgnoreCase)
 					|| name.StartsWith(prefixes[i], StringComparison.InvariantCultureIgnoreCase))
 					return true;
+
+			return false;
+		}
+
+		private static bool TryFindInteger(string name, out int value)
+		{
+			value = 0;
+			if (string.IsNullOrEmpty(name))
+				return false;
+
+			for (int i = 0; i < name.Length; i++)
+			{
+				if (name[i] < '0' || name[i] > '9')
+					continue;
+
+				long parsed = 0;
+				while (i < name.Length && name[i] >= '0' && name[i] <= '9')
+				{
+					parsed = parsed * 10 + name[i] - '0';
+					if (parsed > int.MaxValue)
+						return false;
+					i++;
+				}
+				value = (int)parsed;
+				return true;
+			}
 
 			return false;
 		}
