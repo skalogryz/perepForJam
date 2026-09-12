@@ -21,6 +21,8 @@ namespace PereSkyroom
 			public Mesh Mesh;
 			public Shape CollisionShape;
 			public Vector3 LocalOffset;
+			public Shape BoundingBoxCollisionShape;
+			public Vector3 BoundingBoxCollisionOffset;
 		}
 
 		private static readonly Color DefaultMaterialColor = new Color(0.32f, 0.48f, 0.62f, 1.0f);
@@ -73,11 +75,12 @@ namespace PereSkyroom
 					meshCache.Add(blendObject.Mesh.DataBlockAddress, builtMesh);
 				}
 
+				bool isHook = HasPrefix(blendObject.Name, "кр", "hook");
 				var body = new PlatformProps
 				{
 					Name = SafeNodeName(blendObject.Name),
 					Transform = objectTransform,
-					IsHook = HasPrefix(blendObject.Name, "кр", "hook"),
+					IsHook = isHook,
 					SpecialVisibility = HasPrefix(blendObject.Name, "ск", "hid")
 				};
 				var meshInstance = new MeshInstance
@@ -89,8 +92,12 @@ namespace PereSkyroom
 				var collision = new CollisionShape
 				{
 					Name = "CollisionShape",
-					Shape = builtMesh.CollisionShape,
-					Translation = builtMesh.LocalOffset
+					Shape = isHook
+						? builtMesh.BoundingBoxCollisionShape
+						: builtMesh.CollisionShape,
+					Translation = isHook
+						? builtMesh.BoundingBoxCollisionOffset
+						: builtMesh.LocalOffset
 				};
 				body.AddChild(meshInstance);
 				body.AddChild(collision);
@@ -117,6 +124,13 @@ namespace PereSkyroom
 			string blendPath,
 			Dictionary<string, Texture> textureCache)
 		{
+			Vector3 boundsMinimum;
+			Vector3 boundsMaximum;
+			GetLocalBounds(source, out boundsMinimum, out boundsMaximum);
+			Vector3 boundsSize = GetValidCollisionSize(boundsMaximum - boundsMinimum);
+			Vector3 boundsOffset = (boundsMinimum + boundsMaximum) * 0.5f;
+			var boundsCollision = new BoxShape { Extents = boundsSize * 0.5f };
+
 			if (source.TriangleIndices != null && source.TriangleIndices.Count >= 3)
 			{
 				var surface = new SurfaceTool();
@@ -167,12 +181,29 @@ namespace PereSkyroom
 				{
 					Mesh = mesh,
 					CollisionShape = mesh.CreateTrimeshShape(),
-					LocalOffset = Vector3.Zero
+					LocalOffset = Vector3.Zero,
+					BoundingBoxCollisionShape = boundsCollision,
+					BoundingBoxCollisionOffset = boundsOffset
 				};
 			}
 
-			Vector3 minimum = ConvertVertex(source.Vertices[0]);
-			Vector3 maximum = minimum;
+			return new MeshBuildResult
+			{
+				Mesh = CreateFallbackBoxMesh(boundsSize, BuildMaterial(source, blendPath, textureCache)),
+				CollisionShape = boundsCollision,
+				LocalOffset = boundsOffset,
+				BoundingBoxCollisionShape = boundsCollision,
+				BoundingBoxCollisionOffset = boundsOffset
+			};
+		}
+
+		private static void GetLocalBounds(
+			BlendMeshInfo source,
+			out Vector3 minimum,
+			out Vector3 maximum)
+		{
+			minimum = ConvertVertex(source.Vertices[0]);
+			maximum = minimum;
 			for (int i = 1; i < source.Vertices.Count; i++)
 			{
 				Vector3 vertex = ConvertVertex(source.Vertices[i]);
@@ -183,17 +214,14 @@ namespace PereSkyroom
 				maximum.y = Mathf.Max(maximum.y, vertex.y);
 				maximum.z = Mathf.Max(maximum.z, vertex.z);
 			}
+		}
 
-			Vector3 size = maximum - minimum;
+		private static Vector3 GetValidCollisionSize(Vector3 size)
+		{
 			size.x = Mathf.Max(size.x, 0.1f);
 			size.y = Mathf.Max(size.y, 0.1f);
 			size.z = Mathf.Max(size.z, 0.1f);
-			return new MeshBuildResult
-			{
-				Mesh = CreateFallbackBoxMesh(size, BuildMaterial(source, blendPath, textureCache)),
-				CollisionShape = new BoxShape { Extents = size * 0.5f },
-				LocalOffset = (minimum + maximum) * 0.5f
-			};
+			return size;
 		}
 
 		private static CubeMesh CreateFallbackBoxMesh(Vector3 size, Material material)
