@@ -12,6 +12,7 @@ namespace PereSkyroom
 		public Spatial Root;
 		public Vector3 PlayerSpawn;
 		public int MeshObjectCount;
+		public int LightObjectCount;
 	}
 
 	public static class BlendLevelLoader
@@ -42,6 +43,7 @@ namespace PereSkyroom
 			bool hasSpawn = false;
 			bool hasCameraSpawn = false;
 			int meshCount = 0;
+			int lightCount = 0;
 
 			foreach (BlendObjectInfo blendObject in objects)
 			{
@@ -64,6 +66,16 @@ namespace PereSkyroom
 					hasCameraSpawn = true;
 				}
 
+				if (blendObject.Light != null)
+				{
+					Light light = BuildLight(blendObject, objectTransform);
+					if (light != null)
+					{
+						root.AddChild(light);
+						lightCount++;
+					}
+				}
+
 				if (blendObject.Mesh == null || blendObject.Mesh.Vertices == null
 					|| blendObject.Mesh.Vertices.Count == 0)
 					continue;
@@ -76,6 +88,7 @@ namespace PereSkyroom
 				}
 
 				bool isHook = HasPrefix(blendObject.Name, "кр", "hook");
+				bool hasCollision = !HasPrefix(blendObject.Name, "дек");
 				var body = new PlatformProps
 				{
 					Name = SafeNodeName(blendObject.Name),
@@ -89,18 +102,21 @@ namespace PereSkyroom
 					Mesh = builtMesh.Mesh,
 					Translation = builtMesh.LocalOffset
 				};
-				var collision = new CollisionShape
-				{
-					Name = "CollisionShape",
-					Shape = isHook
-						? builtMesh.BoundingBoxCollisionShape
-						: builtMesh.CollisionShape,
-					Translation = isHook
-						? builtMesh.BoundingBoxCollisionOffset
-						: builtMesh.LocalOffset
-				};
 				body.AddChild(meshInstance);
-				body.AddChild(collision);
+				if (hasCollision)
+				{
+					var collision = new CollisionShape
+					{
+						Name = "CollisionShape",
+						Shape = isHook
+							? builtMesh.BoundingBoxCollisionShape
+							: builtMesh.CollisionShape,
+						Translation = isHook
+							? builtMesh.BoundingBoxCollisionOffset
+							: builtMesh.LocalOffset
+					};
+					body.AddChild(collision);
+				}
 				root.AddChild(body);
 				meshCount++;
 			}
@@ -115,8 +131,70 @@ namespace PereSkyroom
 			{
 				Root = root,
 				PlayerSpawn = spawn,
-				MeshObjectCount = meshCount
+				MeshObjectCount = meshCount,
+				LightObjectCount = lightCount
 			};
+		}
+
+		private static Light BuildLight(BlendObjectInfo blendObject, Transform objectTransform)
+		{
+			BlendLightInfo source = blendObject.Light;
+			if (source == null)
+				return null;
+
+			Light light;
+			switch (source.Type)
+			{
+				case BlendLightType.Sun:
+					light = new DirectionalLight();
+					break;
+				case BlendLightType.Spot:
+					light = new SpotLight
+					{
+						SpotRange = GetLightRange(source),
+						SpotAngle = Mathf.Clamp(source.SpotSizeDegrees * 0.5f, 0.1f, 89.9f),
+						SpotAngleAttenuation = Mathf.Lerp(8.0f, 0.5f,
+							Mathf.Clamp(source.SpotBlend, 0.0f, 1.0f))
+					};
+					break;
+				case BlendLightType.Point:
+				case BlendLightType.Area:
+				default:
+					light = new OmniLight
+					{
+						OmniRange = GetLightRange(source)
+					};
+					break;
+			}
+
+			BlendColor4 sourceColor = source.Color;
+			light.Name = SafeNodeName(blendObject.Name);
+			light.Transform = new Transform(
+				objectTransform.basis.Orthonormalized(), objectTransform.origin);
+			light.LightColor = new Color(sourceColor.R, sourceColor.G, sourceColor.B, 1.0f);
+			light.LightEnergy = GetLightEnergy(source);
+			light.LightSpecular = Mathf.Max(0.0f, source.SpecularFactor);
+			light.ShadowEnabled = source.CastsShadow;
+			return light;
+		}
+
+		private static float GetLightEnergy(BlendLightInfo source)
+		{
+			float energy = Mathf.Max(0.0f, source.Energy)
+				* Mathf.Pow(2.0f, source.Exposure);
+			// Blender point, spot and area energy is expressed as power. Godot 3
+			// uses a unitless multiplier, whose practical default corresponds to
+			// roughly 1000 W in a modern Blender scene.
+			if (source.Type != BlendLightType.Sun)
+				energy *= 0.001f;
+			return energy;
+		}
+
+		private static float GetLightRange(BlendLightInfo source)
+		{
+			return source.CutoffDistance > 0.0f
+				? source.CutoffDistance
+				: 20.0f;
 		}
 
 		private static MeshBuildResult BuildMesh(

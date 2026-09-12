@@ -64,6 +64,9 @@ namespace PereSkyroom
 		private static string _pendingBlendLevelPath;
 
 		private Spatial _levelRoot;
+		private Environment _mainSceneEnvironment;
+		private float _mainSceneAmbientLightEnergy;
+		private DirectionalLight _mainSceneSun;
 		private PlayerController _player;
 		private WeaponHud _weaponHud;
 		private StoneDropManager _stoneDropManager;
@@ -362,6 +365,7 @@ namespace PereSkyroom
 				Spatial oldLevel = _levelRoot;
 				_levelRoot = loaded.Root;
 				AddChild(_levelRoot);
+				SetMainSceneLightingEnabled(loaded.LightObjectCount == 0);
 				if (oldLevel != null && IsInstanceValid(oldLevel))
 					oldLevel.QueueFree();
 
@@ -372,7 +376,9 @@ namespace PereSkyroom
 				_stoneDropManager.ClearStones();
 				_pet.RespawnAtPlayer();
 				_loadedBlendLevelPath = path;
-				GD.Print("Loaded .blend level: " + path + " (" + loaded.MeshObjectCount + " mesh objects).");
+				GD.Print("Loaded .blend level: " + path + " ("
+					+ loaded.MeshObjectCount + " mesh objects, "
+					+ loaded.LightObjectCount + " light objects).");
 				if (showMessage)
 					_player.ShowSystemMessage("BLEND LEVEL LOADED: " + loaded.MeshObjectCount + " OBJECTS");
 				return true;
@@ -454,7 +460,7 @@ namespace PereSkyroom
 		private void BuildEnvironment()
 		{
 			var worldEnvironment = new WorldEnvironment { Name = "SkyboxEnvironment" };
-			var environment = new Environment
+			_mainSceneEnvironment = new Environment
 			{
 				BackgroundMode = Environment.BGMode.Sky,
 				AmbientLightColor = new Color(0.46f, 0.55f, 0.75f),
@@ -475,12 +481,13 @@ namespace PereSkyroom
 				SunEnergy = 3.5f,
 				TextureSize = ProceduralSky.TextureSizeEnum.Size1024
 			};
-			environment.BackgroundSky = proceduralSky;
-			environment.BackgroundEnergy = 0.8f;
-			worldEnvironment.Environment = environment;
+			_mainSceneEnvironment.BackgroundSky = proceduralSky;
+			_mainSceneEnvironment.BackgroundEnergy = 0.8f;
+			_mainSceneAmbientLightEnergy = _mainSceneEnvironment.AmbientLightEnergy;
+			worldEnvironment.Environment = _mainSceneEnvironment;
 			AddChild(worldEnvironment);
 
-			var sun = new DirectionalLight
+			_mainSceneSun = new DirectionalLight
 			{
 				Name = "Sun",
 				LightColor = new Color(0.88f, 0.91f, 1.0f),
@@ -488,7 +495,19 @@ namespace PereSkyroom
 				ShadowEnabled = true,
 				RotationDegrees = new Vector3(-52.0f, -28.0f, 0.0f)
 			};
-			AddChild(sun);
+			AddChild(_mainSceneSun);
+		}
+
+		private void SetMainSceneLightingEnabled(bool enabled)
+		{
+			if (_mainSceneSun != null && IsInstanceValid(_mainSceneSun))
+				_mainSceneSun.Visible = enabled;
+			if (_mainSceneEnvironment != null)
+			{
+				_mainSceneEnvironment.AmbientLightEnergy = enabled
+					? _mainSceneAmbientLightEnergy
+					: 0.0f;
+			}
 		}
 
 		private void BuildRoom()
