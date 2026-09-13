@@ -92,6 +92,9 @@ namespace PereSkyroom
 			= new Dictionary<Node, PauseModeEnum>();
 		private bool _gameOverStarted;
 		private bool _platformOutlinesEnabled;
+		private bool _hasQuickSave;
+		private Vector3 _quickSavedPlayerPosition;
+		private Vector3 _quickSavedPetPosition;
 
 		public override void _Ready()
 		{
@@ -176,6 +179,20 @@ namespace PereSkyroom
 				return;
 			if (_gameOverStarted)
 				return;
+			if (Input.IsActionJustPressed("quick_save"))
+			{
+				if (!IsDialogActive())
+					QuickSavePositions();
+				GetTree().SetInputAsHandled();
+				return;
+			}
+			if (Input.IsActionJustPressed("quick_load"))
+			{
+				if (!IsDialogActive())
+					QuickLoadPositions();
+				GetTree().SetInputAsHandled();
+				return;
+			}
 			if (Input.IsActionJustPressed("toggle_platform_outlines"))
 			{
 				SetPlatformOutlinesEnabled(!_platformOutlinesEnabled, true);
@@ -376,6 +393,41 @@ namespace PereSkyroom
 			GetTree().ReloadCurrentScene();
 		}
 
+		private void QuickSavePositions()
+		{
+			if (_player == null || !IsInstanceValid(_player)
+				|| _pet == null || !IsInstanceValid(_pet) || _player.IsDead)
+			{
+				return;
+			}
+
+			_quickSavedPlayerPosition = _player.GlobalTransform.origin;
+			_quickSavedPetPosition = _pet.GlobalTransform.origin;
+			_hasQuickSave = true;
+			_player.ShowSystemMessage("QUICK SAVE");
+		}
+
+		private void QuickLoadPositions()
+		{
+			if (_gameOverStarted || _player == null || !IsInstanceValid(_player)
+				|| _pet == null || !IsInstanceValid(_pet) || _player.IsDead)
+			{
+				return;
+			}
+
+			if (!_hasQuickSave)
+			{
+				_player.ShowSystemMessage("NO QUICK SAVE");
+				return;
+			}
+
+			_player.RestoreQuickSavePosition(_quickSavedPlayerPosition);
+			_pet.RestoreQuickSavePosition(_quickSavedPetPosition);
+			_player.ApplyDamage(1.0f);
+			if (!_player.IsDead)
+				_player.ShowSystemMessage("QUICK LOAD: -1 HEALTH");
+		}
+
 		private void SetupBlendFileDialog()
 		{
 			var layer = new CanvasLayer { Name = "BlendFileDialogLayer", Layer = 1400 };
@@ -429,6 +481,7 @@ namespace PereSkyroom
 				_player.PlaceAt(loaded.PlayerSpawn);
 				_stoneDropManager.ClearStones();
 				_pet.RespawnAtPlayer();
+				_hasQuickSave = false;
 				_loadedBlendLevelPath = path;
 				_player.ResetFullHealthRestoreLimit();
 				_player.ResetKissHealingCooldown();

@@ -162,6 +162,20 @@ namespace PereSkyroom
 			SetMovingVisual(false);
 		}
 
+		public void RestoreQuickSavePosition(Vector3 position)
+		{
+			Transform transform = GlobalTransform;
+			transform.origin = position;
+			GlobalTransform = transform;
+			_velocity = Vector3.Zero;
+			_targetStone = null;
+			_targetRequiresJump = false;
+			_jumpStartedForTarget = false;
+			_collisionlessJumpInProgress = false;
+			CollisionMask = PlayerController.WorldCollisionLayer;
+			SetMovingVisual(false);
+		}
+
 		private void SelectTargetStone(Vector3 playerPosition)
 		{
 			if (StoneManager == null || !IsInstanceValid(StoneManager))

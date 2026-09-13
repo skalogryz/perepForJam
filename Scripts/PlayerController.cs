@@ -321,6 +321,18 @@ namespace PereSkyroom
 			_velocity = Vector3.Zero;
 		}
 
+		public void RestoreQuickSavePosition(Vector3 position)
+		{
+			if (_isDead)
+				return;
+
+			DetachFromHook(false);
+			Transform transform = GlobalTransform;
+			transform.origin = position;
+			GlobalTransform = transform;
+			_velocity = Vector3.Zero;
+		}
+
 		public bool TryAttachToHook(PlatformProps hook)
 		{
 			if (hook == null || !IsInstanceValid(hook) || !hook.IsHook || IsOnHook)
