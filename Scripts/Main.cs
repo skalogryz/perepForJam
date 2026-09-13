@@ -1,5 +1,7 @@
 using Godot;
 using System.Collections.Generic;
+using IOFile = System.IO.File;
+using IOPath = System.IO.Path;
 
 namespace PereSkyroom
 {
@@ -24,6 +26,7 @@ namespace PereSkyroom
 		[Export] public PackedScene PetScene;
 		[Export] public PackedScene MovingPetScene;
 		[Export] public PackedScene GameOverScene;
+		[Export] public PackedScene GameCompleteScene;
 		[Export] public float PetPlayerReachDistance = 2.0f;
 		[Export] public float PetStoneSearchDistance = 3.0f;
 		[Export] public float PetSideLength = 0.5f;
@@ -91,6 +94,7 @@ namespace PereSkyroom
 		private readonly Dictionary<Node, PauseModeEnum> _childPauseModesBeforeDialog
 			= new Dictionary<Node, PauseModeEnum>();
 		private bool _gameOverStarted;
+		private bool _gameCompleted;
 		private bool _platformOutlinesEnabled;
 		private bool _hasQuickSave;
 		private Vector3 _quickSavedPlayerPosition;
@@ -136,8 +140,14 @@ namespace PereSkyroom
 				_pendingBlendLevelPath = null;
 				LoadBlendLevel(path, false);
 			}
-			else if (!string.IsNullOrEmpty(BlendLevelPathOnStartup))
-				LoadBlendLevel(BlendLevelPathOnStartup, false);
+			else
+			{
+				string adjacentLevelPath = FindAdjacentExecutableLevel();
+				if (!string.IsNullOrEmpty(adjacentLevelPath))
+					LoadBlendLevel(adjacentLevelPath, false);
+				else if (!string.IsNullOrEmpty(BlendLevelPathOnStartup))
+					LoadBlendLevel(BlendLevelPathOnStartup, false);
+			}
 
 			foreach (string argument in OS.GetCmdlineArgs())
 			{
@@ -162,6 +172,24 @@ namespace PereSkyroom
 			}
 		}
 
+		private static string FindAdjacentExecutableLevel()
+		{
+			// Browser exports do not have a native executable directory and must not
+			// probe the host file system for an external Blender file.
+			if (OS.HasFeature("HTML5") || OS.HasFeature("web"))
+				return null;
+
+			string executablePath = OS.GetExecutablePath();
+			if (string.IsNullOrWhiteSpace(executablePath))
+				return null;
+			string executableDirectory = IOPath.GetDirectoryName(executablePath);
+			if (string.IsNullOrWhiteSpace(executableDirectory))
+				return null;
+
+			string levelPath = IOPath.Combine(executableDirectory, "level.blend");
+			return IOFile.Exists(levelPath) ? levelPath : null;
+		}
+
 		private void MoveSceneLevelNodesToRuntimeRoot()
 		{
 			Node roomCenterTrigger = GetNodeOrNull("RoomCenterTrigger");
@@ -177,7 +205,7 @@ namespace PereSkyroom
 			var key = inputEvent as InputEventKey;
 			if (key == null || !key.Pressed || key.Echo)
 				return;
-			if (_gameOverStarted)
+			if (_gameOverStarted || _gameCompleted)
 				return;
 			if (Input.IsActionJustPressed("quick_save"))
 			{
@@ -239,6 +267,8 @@ namespace PereSkyroom
 				settings.Connect(nameof(GlobalSettings.TriggerEvent), this, nameof(OnTriggerEvent));
 			if (!settings.IsConnected(nameof(GlobalSettings.DialogCloseRequested), this, nameof(OnDialogCloseRequested)))
 				settings.Connect(nameof(GlobalSettings.DialogCloseRequested), this, nameof(OnDialogCloseRequested));
+			if (!settings.IsConnected(nameof(GlobalSettings.GameCompletionRequested), this, nameof(OnGameCompletionRequested)))
+				settings.Connect(nameof(GlobalSettings.GameCompletionRequested), this, nameof(OnGameCompletionRequested));
 		}
 
 		private void DisconnectDialogueSignals()
@@ -250,6 +280,8 @@ namespace PereSkyroom
 				settings.Disconnect(nameof(GlobalSettings.TriggerEvent), this, nameof(OnTriggerEvent));
 			if (settings.IsConnected(nameof(GlobalSettings.DialogCloseRequested), this, nameof(OnDialogCloseRequested)))
 				settings.Disconnect(nameof(GlobalSettings.DialogCloseRequested), this, nameof(OnDialogCloseRequested));
+			if (settings.IsConnected(nameof(GlobalSettings.GameCompletionRequested), this, nameof(OnGameCompletionRequested)))
+				settings.Disconnect(nameof(GlobalSettings.GameCompletionRequested), this, nameof(OnGameCompletionRequested));
 		}
 
 		private void OnTriggerEvent(string eventName, Node player, Node triggerField)
@@ -320,9 +352,28 @@ namespace PereSkyroom
 			CloseDialog();
 		}
 
+		private void OnGameCompletionRequested()
+		{
+			if (_gameOverStarted || _gameCompleted
+				|| _player == null || !IsInstanceValid(_player) || _player.IsDead)
+			{
+				return;
+			}
+			if (GameCompleteScene == null)
+			{
+				GD.PushError("GameCompleteScene is not assigned in Main.tscn.");
+				return;
+			}
+
+			_gameCompleted = true;
+			if (IsDialogActive())
+				CloseDialog();
+			ShowDialog(GameCompleteScene.Instance());
+		}
+
 		private void OnPlayerDied()
 		{
-			if (_gameOverStarted)
+			if (_gameOverStarted || _gameCompleted)
 				return;
 
 			_gameOverStarted = true;

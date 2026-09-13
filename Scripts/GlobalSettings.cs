@@ -12,6 +12,8 @@ namespace PereSkyroom
 		[Signal]
 		public delegate void DialogCloseRequested();
 		[Signal]
+		public delegate void GameCompletionRequested();
+		[Signal]
 		public delegate void BoostModeChanged(bool enabled);
 		[Signal]
 		public delegate void PlatformOutlineModeChanged(bool enabled);
@@ -108,6 +110,13 @@ namespace PereSkyroom
 			if (inst == null || !IsInstanceValid(inst))
 				return;
 			inst.EmitSignal(nameof(DialogCloseRequested));
+		}
+
+		public static void GameCompleted()
+		{
+			if (inst == null || !IsInstanceValid(inst))
+				return;
+			inst.EmitSignal(nameof(GameCompletionRequested));
 		}
 
 		public static void SetBoostMode(bool enabled)

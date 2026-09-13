@@ -136,7 +136,10 @@ namespace PereSkyroom
 				return;
 
 			if (winner == Player)
+			{
 				GlobalSettings.DialogClosing();
+				GlobalSettings.GameCompleted();
+			}
 			else if (winner == Computer)
 				StartNewGame();
 		}

@@ -1,4 +1,4 @@
-[gd_scene load_steps=19 format=2]
+[gd_scene load_steps=20 format=2]
 
 [ext_resource path="res://Scripts/Main.cs" type="Script" id=1]
 [ext_resource path="res://TriggerField.tscn" type="PackedScene" id=2]
@@ -16,6 +16,7 @@
 [ext_resource path="res://GameOver.tscn" type="PackedScene" id=14]
 [ext_resource path="res://Resources/HeatFull.png" type="Texture" id=15]
 [ext_resource path="res://Resources/HeatEmpty.png" type="Texture" id=16]
+[ext_resource path="res://GameComplete.tscn" type="PackedScene" id=17]
 
 [sub_resource type="StyleBoxFlat" id=2]
 bg_color = Color( 0.682353, 1, 0, 1 )
@@ -39,6 +40,7 @@ StoneSpawnIntervalSeconds = 0.5
 PetScene = ExtResource( 10 )
 MovingPetScene = ExtResource( 3 )
 GameOverScene = ExtResource( 14 )
+GameCompleteScene = ExtResource( 17 )
 AccentWireframeColor = Color( 0.682353, 1, 0, 1 )
 PlatformOutlinesEnabledByDefault = true
 
