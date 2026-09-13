@@ -6,7 +6,7 @@ namespace PereSkyroom
 {
 	public class Pet : KinematicBody
 	{
-		private sealed class WalkAnimationBinding
+		private sealed class AnimationBinding
 		{
 			public AnimationPlayer Player;
 			public string AnimationName;
@@ -30,6 +30,8 @@ namespace PereSkyroom
 		public float UniformVisualScale = 1.0f;
 		public string TriggerEventName = "pet_activated";
 		public bool UseDefaultVisual = true;
+		public Node StationaryVisual;
+		public Node MovingVisual;
 
 		private readonly List<DroppedStone> _stoneCandidates = new List<DroppedStone>();
 		private DroppedStone _targetStone;
@@ -38,9 +40,12 @@ namespace PereSkyroom
 		private bool _jumpStartedForTarget;
 		private bool _collisionlessJumpInProgress;
 		private float _jumpLandingCenterY;
-		private readonly List<WalkAnimationBinding> _walkAnimations
-			= new List<WalkAnimationBinding>();
-		private bool _walkAnimationEnabled;
+		private readonly List<AnimationBinding> _stationaryAnimations
+			= new List<AnimationBinding>();
+		private readonly List<AnimationBinding> _movingAnimations
+			= new List<AnimationBinding>();
+		private bool _movingVisualActive;
+		private bool _visualStateInitialized;
 
 		public override void _Ready()
 		{
@@ -51,14 +56,17 @@ namespace PereSkyroom
 
 			BuildPhysicalBody();
 			BuildTriggerField();
-			FindWalkAnimations(this);
+			FindAnimations(StationaryVisual, _stationaryAnimations);
+			if (MovingVisual != StationaryVisual)
+				FindAnimations(MovingVisual, _movingAnimations);
+			SetMovingVisual(false, true);
 		}
 
 		public override void _PhysicsProcess(float delta)
 		{
 			if (Player == null || !IsInstanceValid(Player))
 			{
-				SetWalkAnimationsEnabled(false);
+				SetMovingVisual(false);
 				return;
 			}
 
@@ -151,7 +159,7 @@ namespace PereSkyroom
 			_jumpStartedForTarget = false;
 			_collisionlessJumpInProgress = false;
 			CollisionMask = PlayerController.WorldCollisionLayer;
-			SetWalkAnimationsEnabled(false);
+			SetMovingVisual(false);
 		}
 
 		private void SelectTargetStone(Vector3 playerPosition)
@@ -225,30 +233,28 @@ namespace PereSkyroom
 			_velocity = MoveAndSlide(_velocity, Vector3.Up, true, 4, Mathf.Deg2Rad(55.0f));
 			TryFinishCollisionlessJump(previousY);
 			Vector3 displacement = GlobalTransform.origin - previousPosition;
-			SetWalkAnimationsEnabled(
-				new Vector2(displacement.x, displacement.z).LengthSquared() > 0.000001f);
+			SetMovingVisual(displacement.LengthSquared() > 0.000001f);
 		}
 
-		private void FindWalkAnimations(Node parent)
+		private void FindAnimations(Node parent, List<AnimationBinding> bindings)
 		{
-			foreach (Node child in parent.GetChildren())
-			{
-				AnimationPlayer animationPlayer = child as AnimationPlayer;
-				if (animationPlayer != null)
-					RegisterWalkAnimations(animationPlayer);
+			if (parent == null || !IsInstanceValid(parent))
+				return;
 
-				FindWalkAnimations(child);
-			}
+			AnimationPlayer parentAnimationPlayer = parent as AnimationPlayer;
+			if (parentAnimationPlayer != null)
+				RegisterAnimations(parentAnimationPlayer, bindings);
+
+			foreach (Node child in parent.GetChildren())
+				FindAnimations(child, bindings);
 		}
 
-		private void RegisterWalkAnimations(AnimationPlayer sourcePlayer)
+		private void RegisterAnimations(
+			AnimationPlayer sourcePlayer, List<AnimationBinding> bindings)
 		{
 			var animationNames = new List<string>();
 			foreach (string animationName in sourcePlayer.GetAnimationList())
-			{
-				if (animationName.StartsWith("walk", StringComparison.OrdinalIgnoreCase))
-					animationNames.Add(animationName);
-			}
+				animationNames.Add(animationName);
 
 			for (int i = 0; i < animationNames.Count; i++)
 			{
@@ -263,7 +269,7 @@ namespace PereSkyroom
 
 					playbackPlayer = new AnimationPlayer
 					{
-						Name = sourcePlayer.Name + "_WalkParallel" + i,
+						Name = sourcePlayer.Name + "_ParallelAnimation" + i,
 						RootNode = sourcePlayer.RootNode,
 						PlaybackSpeed = sourcePlayer.PlaybackSpeed
 					};
@@ -271,7 +277,7 @@ namespace PereSkyroom
 					playbackParent.AddChild(playbackPlayer);
 				}
 
-				_walkAnimations.Add(new WalkAnimationBinding
+				bindings.Add(new AnimationBinding
 				{
 					Player = playbackPlayer,
 					AnimationName = animationName
@@ -279,35 +285,67 @@ namespace PereSkyroom
 			}
 		}
 
-		private void SetWalkAnimationsEnabled(bool enabled)
+		private void SetMovingVisual(bool moving, bool force = false)
 		{
-			if (_walkAnimationEnabled == enabled)
+			bool useMovingVisual = moving
+				&& MovingVisual != null && IsInstanceValid(MovingVisual);
+			if (!force && _visualStateInitialized && _movingVisualActive == useMovingVisual)
 			{
-				if (enabled)
-					EnsureWalkAnimationsPlaying();
+				EnsureAnimationsPlaying(
+					useMovingVisual ? _movingAnimations : _stationaryAnimations);
 				return;
 			}
 
-			_walkAnimationEnabled = enabled;
-			if (enabled)
+			_visualStateInitialized = true;
+			_movingVisualActive = useMovingVisual;
+			SetVisualVisible(StationaryVisual, !useMovingVisual);
+			if (MovingVisual != StationaryVisual)
+				SetVisualVisible(MovingVisual, useMovingVisual);
+
+			StopAnimations(_stationaryAnimations);
+			StopAnimations(_movingAnimations);
+			EnsureAnimationsPlaying(
+				useMovingVisual ? _movingAnimations : _stationaryAnimations);
+		}
+
+		private static void SetVisualVisible(Node visual, bool visible)
+		{
+			if (visual == null || !IsInstanceValid(visual))
+				return;
+
+			Spatial spatial = visual as Spatial;
+			if (spatial != null)
 			{
-				EnsureWalkAnimationsPlaying();
+				spatial.Visible = visible;
 				return;
 			}
 
-			for (int i = 0; i < _walkAnimations.Count; i++)
+			CanvasItem canvasItem = visual as CanvasItem;
+			if (canvasItem != null)
 			{
-				AnimationPlayer animationPlayer = _walkAnimations[i].Player;
+				canvasItem.Visible = visible;
+				return;
+			}
+
+			foreach (Node child in visual.GetChildren())
+				SetVisualVisible(child, visible);
+		}
+
+		private static void StopAnimations(List<AnimationBinding> bindings)
+		{
+			for (int i = 0; i < bindings.Count; i++)
+			{
+				AnimationPlayer animationPlayer = bindings[i].Player;
 				if (animationPlayer != null && IsInstanceValid(animationPlayer))
 					animationPlayer.Stop();
 			}
 		}
 
-		private void EnsureWalkAnimationsPlaying()
+		private static void EnsureAnimationsPlaying(List<AnimationBinding> bindings)
 		{
-			for (int i = 0; i < _walkAnimations.Count; i++)
+			for (int i = 0; i < bindings.Count; i++)
 			{
-				WalkAnimationBinding binding = _walkAnimations[i];
+				AnimationBinding binding = bindings[i];
 				AnimationPlayer animationPlayer = binding.Player;
 				if (animationPlayer == null || !IsInstanceValid(animationPlayer))
 					continue;

@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=2]
+[gd_scene load_steps=18 format=2]
 
 [ext_resource path="res://Scripts/Main.cs" type="Script" id=1]
 [ext_resource path="res://TriggerField.tscn" type="PackedScene" id=2]
@@ -9,6 +9,7 @@
 [ext_resource path="res://Resources/hookpower.png" type="Texture" id=7]
 [ext_resource path="res://Scripts/WeaponHud.cs" type="Script" id=8]
 [ext_resource path="res://Scripts/PlayerStatsHud.cs" type="Script" id=9]
+[ext_resource path="res://BeatHeadIdleAdj.tscn" type="PackedScene" id=10]
 [ext_resource path="res://Resources/stratiumNormal.png" type="Texture" id=11]
 [ext_resource path="res://Resources/straitumBoost.png" type="Texture" id=12]
 [ext_resource path="res://Resources/player_stats_palette_material.tres" type="Material" id=13]
@@ -44,7 +45,8 @@ HudLabelsVisibleByDefault = false
 FpsVisibleByDefault = true
 SpeedBoostJumpMultiplier = 2.0
 StoneSpawnIntervalSeconds = 0.5
-PetScene = ExtResource( 3 )
+PetScene = ExtResource( 10 )
+MovingPetScene = ExtResource( 3 )
 GameOverScene = ExtResource( 14 )
 AccentWireframeColor = Color( 0.682353, 1, 0, 1 )
 

@@ -22,6 +22,7 @@ namespace PereSkyroom
 		[Export] public float StoneEvaluationDelaySeconds = 3.0f;
 		[Export] public int MaximumStoneCount = 20;
 		[Export] public PackedScene PetScene;
+		[Export] public PackedScene MovingPetScene;
 		[Export] public PackedScene GameOverScene;
 		[Export] public float PetPlayerReachDistance = 2.0f;
 		[Export] public float PetStoneSearchDistance = 3.0f;
@@ -634,16 +635,19 @@ namespace PereSkyroom
 		private Pet BuildPet(PlayerController player, StoneDropManager stoneManager)
 		{
 			Pet pet = null;
-			Node customVisual = null;
+			Node stationaryVisual = null;
+			Node movingVisual = null;
 			if (PetScene != null)
 			{
 				Node instance = PetScene.Instance();
 				pet = instance as Pet;
 				if (pet == null)
-					customVisual = instance;
+					stationaryVisual = instance;
 			}
 			if (pet == null)
 				pet = new Pet();
+			if (MovingPetScene != null)
+				movingVisual = MovingPetScene.Instance();
 
 			pet.Name = "Pet";
 			pet.Player = player;
@@ -655,9 +659,13 @@ namespace PereSkyroom
 			pet.UniformVisualScale = PetScale;
 			pet.JumpSpeed = PetJumpSpeed;
 			pet.FallY = PetFallY;
-			pet.UseDefaultVisual = customVisual == null && PetScene == null;
-			if (customVisual != null)
-				pet.AddChild(customVisual);
+			pet.UseDefaultVisual = stationaryVisual == null && PetScene == null;
+			pet.StationaryVisual = stationaryVisual;
+			pet.MovingVisual = movingVisual;
+			if (stationaryVisual != null)
+				pet.AddChild(stationaryVisual);
+			if (movingVisual != null)
+				pet.AddChild(movingVisual);
 			AddChild(pet);
 			pet.GlobalTransform = new Transform(
 				Basis.Identity,
