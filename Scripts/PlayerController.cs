@@ -12,15 +12,21 @@ namespace PereSkyroom
         private const float FlySpeed = 10.0f;
         private const float JumpSpeed = 8.2f;
         private const float Gravity = 22.0f;
-        private const float MouseSensitivity = 0.10f;
+		private const float MouseSensitivity = 0.10f;
 		private const float InteractionDistance = 100.0f;
+		public const float MaximumHealth = 120.0f;
+		private const float MaximumTemperature = 100.0f;
+		private const float BoostHeatDurationSeconds = 7.0f;
+		private const float NormalCoolingDurationSeconds = 4.0f;
+		private const float OverheatDamage = 40.0f;
 
 		public float SpeedBoostMovementMultiplier = 3.5f;
 		public float SpeedBoostJumpMultiplier = 1.0f;
 
-        private Spatial _head;
+		private Spatial _head;
 		private Camera _camera;
 		private WeaponHud _weaponHud;
+		private BlueNoiseDither _ditherPostProcess;
 		private CanvasLayer _hud;
         private Label _modeLabel;
         private Label _scoreLabel;
@@ -40,9 +46,13 @@ namespace PereSkyroom
 		private float _fpsRefreshTimer;
 		private PlatformProps _hookPlatform;
 		private bool _weaponVisible = true;
+		private float _health = MaximumHealth;
+		private float _temperature;
 
 		public bool WeaponVisible { get { return _weaponVisible; } }
 		public bool SpeedBoostEnabled { get { return _speedBoostEnabled; } }
+		public float Health { get { return _health; } }
+		public float Temperature { get { return _temperature; } }
 		public float PlanarMovementSpeed { get { return new Vector2(_velocity.x, _velocity.z).Length(); } }
 		public float NormalWalkSpeed { get { return WalkSpeed; } }
 		public bool HudLabelsVisible { get { return _hud != null && _hud.Visible; } }
@@ -122,12 +132,9 @@ namespace PereSkyroom
 			}
 
 			if (Input.IsActionJustPressed("toggle_speed_boost"))
-			{
-				_speedBoostEnabled = !_speedBoostEnabled;
-				GlobalSettings.SetBoostMode(_speedBoostEnabled);
-				UpdatePlayerStatsHud();
-				ShowMessage(_speedBoostEnabled ? "SPEED BOOST ENABLED" : "NORMAL SPEED");
-			}
+				SetSpeedBoostEnabled(!_speedBoostEnabled, true);
+
+			UpdateTemperature(delta);
 
 			if (Input.IsActionJustPressed("interact"))
 			{
@@ -250,6 +257,11 @@ namespace PereSkyroom
 				return;
 			_weaponHud.SetPlayer(this);
 			_weaponHud.SetWeaponVisible(_weaponVisible);
+		}
+
+		public void SetDitherPostProcess(BlueNoiseDither ditherPostProcess)
+		{
+			_ditherPostProcess = ditherPostProcess;
 		}
 
 		public void SetWeaponVisible(bool visible, bool showMessage = false)
@@ -400,6 +412,53 @@ namespace PereSkyroom
 		private void UpdatePlayerStatsHud()
 		{
 			_playerStatsHud.SetBoostEnabled(_speedBoostEnabled);
+			_playerStatsHud.SetHealth(_health, MaximumHealth);
+			_playerStatsHud.SetTemperature(_temperature);
+		}
+
+		private void SetSpeedBoostEnabled(bool enabled, bool showMessage)
+		{
+			if (_speedBoostEnabled == enabled)
+				return;
+
+			_speedBoostEnabled = enabled;
+			GlobalSettings.SetBoostMode(_speedBoostEnabled);
+			UpdatePlayerStatsHud();
+			if (showMessage)
+				ShowMessage(_speedBoostEnabled ? "SPEED BOOST ENABLED" : "NORMAL SPEED");
+		}
+
+		private void UpdateTemperature(float delta)
+		{
+			if (_speedBoostEnabled)
+			{
+				_temperature += MaximumTemperature / BoostHeatDurationSeconds * delta;
+				if (_temperature >= MaximumTemperature)
+				{
+					_temperature = MaximumTemperature;
+					SetSpeedBoostEnabled(false, false);
+					ApplyDamage(OverheatDamage);
+					ShowMessage("BOOST OVERHEAT: -40 HEALTH");
+				}
+			}
+			else
+			{
+				_temperature = Mathf.Max(
+					0.0f,
+					_temperature - MaximumTemperature / NormalCoolingDurationSeconds * delta);
+			}
+
+			UpdatePlayerStatsHud();
+		}
+
+		public void ApplyDamage(float damage)
+		{
+			if (damage <= 0.0f)
+				return;
+			_health = Mathf.Max(0.0f, _health - damage);
+			if (_ditherPostProcess != null && IsInstanceValid(_ditherPostProcess))
+				_ditherPostProcess.PlayDamagePaletteFlash();
+			UpdatePlayerStatsHud();
 		}
 
         private void Shoot()

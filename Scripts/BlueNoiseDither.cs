@@ -6,6 +6,8 @@ namespace PereSkyroom
 	public class BlueNoiseDither : CanvasLayer
 	{
 		private const int NoiseSize = 64;
+		private const float DamagePaletteFlashDurationSeconds = 0.3f;
+		private const float DamagePaletteFlashStepSeconds = 0.1f;
 		private const string DitherShader = @"
 shader_type canvas_item;
 render_mode unshaded;
@@ -46,10 +48,15 @@ void fragment() {
 		private Texture _activeNoiseTexture;
 		private bool _enabled;
 		private bool _paletteInverted;
+		private bool _damagePaletteFlashActive;
+		private bool _damagePaletteSwapped;
+		private float _damagePaletteFlashRemaining;
+		private float _damagePaletteFlashStepElapsed;
 		public bool Enabled { get { return _enabled; } }
 		public bool PaletteInverted { get { return _paletteInverted; } }
-		public Color EffectiveDarkColor { get { return _paletteInverted ? LightColor : DarkColor; } }
-		public Color EffectiveLightColor { get { return _paletteInverted ? DarkColor : LightColor; } }
+		private bool IsPaletteVisuallyInverted { get { return _paletteInverted != _damagePaletteSwapped; } }
+		public Color EffectiveDarkColor { get { return IsPaletteVisuallyInverted ? LightColor : DarkColor; } }
+		public Color EffectiveLightColor { get { return IsPaletteVisuallyInverted ? DarkColor : LightColor; } }
 		public Texture NoiseTexture
 		{
 			get { return _externalNoiseTexture; }
@@ -81,10 +88,13 @@ void fragment() {
 				Visible = false
 			};
 			AddChild(_overlay);
+			if (Player != null && IsInstanceValid(Player))
+				Player.SetDitherPostProcess(this);
 		}
 
 		public override void _Process(float delta)
 		{
+			UpdateDamagePaletteFlash(delta);
 			if (Input.IsActionJustPressed("toggle_dither"))
 				SetEnabled(!_enabled);
 			if (Input.IsActionJustPressed("toggle_dither_palette"))
@@ -115,6 +125,42 @@ void fragment() {
 			ApplyEffectivePalette();
 			if (Player != null && IsInstanceValid(Player))
 				Player.SetDitherPaletteInverted(_paletteInverted, notifyPlayer);
+		}
+
+		public void PlayDamagePaletteFlash()
+		{
+			_damagePaletteFlashRemaining = DamagePaletteFlashDurationSeconds;
+			if (_damagePaletteFlashActive)
+				return;
+
+			_damagePaletteFlashActive = true;
+			_damagePaletteSwapped = true;
+			ApplyEffectivePalette();
+		}
+
+		private void UpdateDamagePaletteFlash(float delta)
+		{
+			if (!_damagePaletteFlashActive)
+				return;
+
+			_damagePaletteFlashRemaining -= delta;
+			_damagePaletteFlashStepElapsed += delta;
+			while (_damagePaletteFlashStepElapsed >= DamagePaletteFlashStepSeconds
+				&& _damagePaletteFlashRemaining > 0.0f)
+			{
+				_damagePaletteFlashStepElapsed -= DamagePaletteFlashStepSeconds;
+				_damagePaletteSwapped = !_damagePaletteSwapped;
+				ApplyEffectivePalette();
+			}
+
+			if (_damagePaletteFlashRemaining > 0.0f)
+				return;
+
+			_damagePaletteFlashRemaining = 0.0f;
+			_damagePaletteFlashStepElapsed = 0.0f;
+			_damagePaletteFlashActive = false;
+			_damagePaletteSwapped = false;
+			ApplyEffectivePalette();
 		}
 
 		private void ApplyEffectivePalette()
