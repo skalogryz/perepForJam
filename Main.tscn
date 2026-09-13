@@ -42,7 +42,6 @@ MovingPetScene = ExtResource( 3 )
 GameOverScene = ExtResource( 14 )
 GameCompleteScene = ExtResource( 17 )
 AccentWireframeColor = Color( 0.682353, 1, 0, 1 )
-PlatformOutlinesEnabledByDefault = true
 
 [node name="RoomCenterTrigger" parent="." instance=ExtResource( 2 )]
 transform = Transform( 3, 0, 0, 0, 1.5, 0, 0, 0, 3, 0, 1.5, 0 )

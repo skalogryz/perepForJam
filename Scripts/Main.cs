@@ -729,7 +729,7 @@ namespace PereSkyroom
 			var triggerField = new TriggerField
 			{
 				Name = "ActivationTrigger",
-				EventName = "last_target_activated",
+				EventName = "puzzle_event",
 				ActivateTarget = target
 			};
 			triggerField.AddChild(new CollisionShape

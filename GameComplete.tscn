@@ -5,9 +5,9 @@
 [ext_resource path="res://Scripts/ControlTranslationGroup.cs" type="Script" id=3]
 
 [node name="GameComplete" type="Control"]
+pause_mode = 2
 anchor_right = 1.0
 anchor_bottom = 1.0
-pause_mode = 2
 script = ExtResource( 1 )
 
 [node name="Background" type="ColorRect" parent="."]
@@ -22,16 +22,26 @@ anchor_bottom = 1.0
 mouse_filter = 2
 
 [node name="VBox" type="VBoxContainer" parent="Center"]
+margin_left = 270.0
+margin_top = 196.0
+margin_right = 690.0
+margin_bottom = 344.0
 custom_constants/separation = 20
 
 [node name="Title" type="Label" parent="Center/VBox"]
+margin_right = 420.0
+margin_bottom = 80.0
 rect_min_size = Vector2( 420, 80 )
+theme = ExtResource( 2 )
 custom_colors/font_color = Color( 0.682353, 1, 0, 1 )
-text = "Поздравляю с освобождением!"
+text = "Congratulations! You are Free!"
 align = 1
 valign = 1
 
 [node name="ContinueHint" type="Label" parent="Center/VBox"]
+margin_top = 100.0
+margin_right = 420.0
+margin_bottom = 148.0
 rect_min_size = Vector2( 420, 48 )
 theme = ExtResource( 2 )
 custom_colors/font_color = Color( 0.870588, 0.909804, 0.901961, 1 )

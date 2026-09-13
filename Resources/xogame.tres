@@ -4,5 +4,5 @@
 
 [resource]
 script = ExtResource( 1 )
-Name = "xogame"
+Name = "puzzle_event"
 UIScene = "res://TicTacToe.tscn"
