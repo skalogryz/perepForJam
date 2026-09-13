@@ -13,9 +13,12 @@ namespace PereSkyroom
 		public delegate void DialogCloseRequested();
 		[Signal]
 		public delegate void BoostModeChanged(bool enabled);
+		[Signal]
+		public delegate void PlatformOutlineModeChanged(bool enabled);
 
 		public static GlobalSettings inst = null;
 		public static bool BoostModeEnabled { get; private set; }
+		public static bool PlatformOutlineModeEnabled { get; private set; }
 		public static string CurrentLanguageCode { get; private set; } = string.Empty;
 		public static bool IsRussianLanguage
 		{
@@ -114,6 +117,15 @@ namespace PereSkyroom
 			BoostModeEnabled = enabled;
 			if (inst != null && IsInstanceValid(inst))
 				inst.EmitSignal(nameof(BoostModeChanged), enabled);
+		}
+
+		public static void SetPlatformOutlineMode(bool enabled)
+		{
+			if (PlatformOutlineModeEnabled == enabled)
+				return;
+			PlatformOutlineModeEnabled = enabled;
+			if (inst != null && IsInstanceValid(inst))
+				inst.EmitSignal(nameof(PlatformOutlineModeChanged), enabled);
 		}
 	}
 }

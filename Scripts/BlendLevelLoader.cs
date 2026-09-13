@@ -74,7 +74,7 @@ namespace PereSkyroom
 					hasCameraSpawn = true;
 				}
 
-				if (blendObject.Light != null)
+				/*if (blendObject.Light != null)
 				{
 					Light light = BuildLight(blendObject, objectTransform);
 					if (light != null)
@@ -82,7 +82,7 @@ namespace PereSkyroom
 						root.AddChild(light);
 						lightCount++;
 					}
-				}
+				}*/
 
 				if (blendObject.Mesh == null || blendObject.Mesh.Vertices == null
 					|| blendObject.Mesh.Vertices.Count == 0)

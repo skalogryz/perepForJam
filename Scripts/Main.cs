@@ -44,6 +44,7 @@ namespace PereSkyroom
 		[Export] public Color AccentWireframeColor = new Color(0.0f, 1.0f, 0.0f, 1.0f);
 		[Export] public bool AccentWireframeEnabledByDefault = false;
 		[Export] public bool AccentObjectDitherEnabledByDefault = false;
+		[Export] public bool PlatformOutlinesEnabledByDefault = true;
 
 		private Texture _ditherNoiseTexture;
 		[Export]
@@ -90,6 +91,7 @@ namespace PereSkyroom
 		private readonly Dictionary<Node, PauseModeEnum> _childPauseModesBeforeDialog
 			= new Dictionary<Node, PauseModeEnum>();
 		private bool _gameOverStarted;
+		private bool _platformOutlinesEnabled;
 
 		public override void _Ready()
 		{
@@ -174,6 +176,12 @@ namespace PereSkyroom
 				return;
 			if (_gameOverStarted)
 				return;
+			if (Input.IsActionJustPressed("toggle_platform_outlines"))
+			{
+				SetPlatformOutlinesEnabled(!_platformOutlinesEnabled, true);
+				GetTree().SetInputAsHandled();
+				return;
+			}
 			if (key.Scancode == (uint)KeyList.Escape && IsDialogActive())
 			{
 				CloseDialog();
@@ -460,7 +468,8 @@ namespace PereSkyroom
 				HudLabelsVisible = HudLabelsVisibleByDefault,
 				FpsVisible = FpsVisibleByDefault,
 				AccentWireframeEnabled = AccentWireframeEnabledByDefault,
-				AccentObjectDitherEnabled = AccentObjectDitherEnabledByDefault
+				AccentObjectDitherEnabled = AccentObjectDitherEnabledByDefault,
+				PlatformOutlinesEnabled = PlatformOutlinesEnabledByDefault
 			};
 		}
 
@@ -476,7 +485,8 @@ namespace PereSkyroom
 				HudLabelsVisible = _player.HudLabelsVisible,
 				FpsVisible = _player.FpsVisible,
 				AccentWireframeEnabled = _wireframe.Enabled,
-				AccentObjectDitherEnabled = _accentDither.Enabled
+				AccentObjectDitherEnabled = _accentDither.Enabled,
+				PlatformOutlinesEnabled = _platformOutlinesEnabled
 			};
 		}
 
@@ -491,6 +501,18 @@ namespace PereSkyroom
 			_panoramicFovMode.SetEnabled(state.PanoramicFovEnabled, false);
 			_wireframe.SetEnabled(state.AccentWireframeEnabled, false);
 			_accentDither.SetEnabled(state.AccentObjectDitherEnabled, false);
+			SetPlatformOutlinesEnabled(state.PlatformOutlinesEnabled, false);
+		}
+
+		private void SetPlatformOutlinesEnabled(bool enabled, bool showMessage)
+		{
+			_platformOutlinesEnabled = enabled;
+			GlobalSettings.SetPlatformOutlineMode(enabled);
+			if (showMessage && _player != null && IsInstanceValid(_player))
+			{
+				_player.ShowSystemMessage(
+					enabled ? "PLATFORM OUTLINES ENABLED" : "PLATFORM OUTLINES DISABLED");
+			}
 		}
 
 		private sealed class DisplayModeState
@@ -504,6 +526,7 @@ namespace PereSkyroom
 			public bool FpsVisible;
 			public bool AccentWireframeEnabled;
 			public bool AccentObjectDitherEnabled;
+			public bool PlatformOutlinesEnabled;
 		}
 
 		private void BuildEnvironment()
@@ -842,7 +865,9 @@ namespace PereSkyroom
 				&& !_player.HudLabelsVisible
 				&& _player.FpsVisible
 				&& _wireframe.Enabled
-				&& _accentDither.Enabled;
+				&& _accentDither.Enabled
+				&& _platformOutlinesEnabled
+				&& GlobalSettings.PlatformOutlineModeEnabled;
 			if (!restored)
 			{
 				GD.PushError("Display modes were not preserved after resetting the level.");

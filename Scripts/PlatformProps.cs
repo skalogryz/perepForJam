@@ -11,11 +11,17 @@ namespace PereSkyroom
 		[Export] public NodePath MovementPath;
 		[Export] public float PathMoveSpeed = 3.0f;
 		[Export] public float PathReturnDurationSeconds = 0.2f;
+		[Export] public Color OutlineColor = new Color(0.0f, 1.0f, 0.0f, 1.0f);
+		[Export(PropertyHint.Range, "0.001,0.25,0.001")]
+		public float OutlineWidth = 0.04f;
 
 		private readonly HashSet<PlayerController> _ignoredPlayers
 			= new HashSet<PlayerController>();
 		private readonly HashSet<PlayerController> _attachedPlayers
 			= new HashSet<PlayerController>();
+		private readonly List<MeshInstance> _outlineMeshes = new List<MeshInstance>();
+		private const string OutlineShaderPath = "res://Resources/platform_inverse_hull.shader";
+		private static Shader _outlineShader;
 		private Area _hookArea;
 		private Path _movementPath;
 		private float _pathLength;
@@ -27,6 +33,7 @@ namespace PereSkyroom
 
 		public override void _Ready()
 		{
+			BuildInverseHullOutlines();
 			SetupPathMovement();
 			if (IsHook)
 				BuildHookArea();
@@ -37,8 +44,20 @@ namespace PereSkyroom
 			{
 				settings.Connect(nameof(GlobalSettings.BoostModeChanged), this, nameof(OnBoostModeChanged));
 			}
+			if (settings != null && IsInstanceValid(settings)
+				&& !settings.IsConnected(
+					nameof(GlobalSettings.PlatformOutlineModeChanged),
+					this,
+					nameof(OnPlatformOutlineModeChanged)))
+			{
+				settings.Connect(
+					nameof(GlobalSettings.PlatformOutlineModeChanged),
+					this,
+					nameof(OnPlatformOutlineModeChanged));
+			}
 
 			ApplyVisibility(GlobalSettings.BoostModeEnabled);
+			ApplyOutlineVisibility(GlobalSettings.PlatformOutlineModeEnabled);
 		}
 
 		public override void _PhysicsProcess(float delta)
@@ -85,6 +104,17 @@ namespace PereSkyroom
 				&& settings.IsConnected(nameof(GlobalSettings.BoostModeChanged), this, nameof(OnBoostModeChanged)))
 			{
 				settings.Disconnect(nameof(GlobalSettings.BoostModeChanged), this, nameof(OnBoostModeChanged));
+			}
+			if (settings != null && IsInstanceValid(settings)
+				&& settings.IsConnected(
+					nameof(GlobalSettings.PlatformOutlineModeChanged),
+					this,
+					nameof(OnPlatformOutlineModeChanged)))
+			{
+				settings.Disconnect(
+					nameof(GlobalSettings.PlatformOutlineModeChanged),
+					this,
+					nameof(OnPlatformOutlineModeChanged));
 			}
 
 			_ignoredPlayers.Clear();
@@ -180,6 +210,79 @@ namespace PereSkyroom
 		private void OnBoostModeChanged(bool enabled)
 		{
 			ApplyVisibility(enabled);
+		}
+
+		private void OnPlatformOutlineModeChanged(bool enabled)
+		{
+			ApplyOutlineVisibility(enabled);
+		}
+
+		private void BuildInverseHullOutlines()
+		{
+			var sourceMeshes = new List<MeshInstance>();
+			CollectMeshInstances(this, sourceMeshes);
+			if (sourceMeshes.Count == 0)
+				return;
+
+			if (_outlineShader == null)
+				_outlineShader = ResourceLoader.Load<Shader>(OutlineShaderPath);
+			if (_outlineShader == null)
+			{
+				GD.PushError("Cannot load platform outline shader: " + OutlineShaderPath);
+				return;
+			}
+
+			for (int i = 0; i < sourceMeshes.Count; i++)
+			{
+				MeshInstance source = sourceMeshes[i];
+				if (source.Mesh == null || source.GetParent() == null)
+					continue;
+
+				var material = new ShaderMaterial { Shader = _outlineShader };
+				AABB bounds = source.GetAabb();
+				Vector3 halfSize = bounds.Size * 0.5f;
+				float outlineWidth = Mathf.Max(OutlineWidth, 0.001f);
+				Vector3 hullScale = new Vector3(
+					1.0f + outlineWidth / Mathf.Max(Mathf.Abs(halfSize.x), 0.0001f),
+					1.0f + outlineWidth / Mathf.Max(Mathf.Abs(halfSize.y), 0.0001f),
+					1.0f + outlineWidth / Mathf.Max(Mathf.Abs(halfSize.z), 0.0001f));
+				material.SetShaderParam("outline_color", OutlineColor);
+				material.SetShaderParam("hull_center", bounds.Position + halfSize);
+				material.SetShaderParam("hull_scale", hullScale);
+				var outline = new MeshInstance
+				{
+					Name = source.Name + "InverseHullOutline",
+					Mesh = source.Mesh,
+					Transform = source.Transform,
+					Layers = source.Layers,
+					Visible = false,
+					CastShadow = GeometryInstance.ShadowCastingSetting.Off,
+					MaterialOverride = material
+				};
+				source.GetParent().AddChild(outline);
+				_outlineMeshes.Add(outline);
+			}
+		}
+
+		private static void CollectMeshInstances(Node parent, List<MeshInstance> result)
+		{
+			foreach (Node child in parent.GetChildren())
+			{
+				MeshInstance mesh = child as MeshInstance;
+				if (mesh != null)
+					result.Add(mesh);
+				CollectMeshInstances(child, result);
+			}
+		}
+
+		private void ApplyOutlineVisibility(bool enabled)
+		{
+			for (int i = 0; i < _outlineMeshes.Count; i++)
+			{
+				MeshInstance outline = _outlineMeshes[i];
+				if (outline != null && IsInstanceValid(outline))
+					outline.Visible = enabled;
+			}
 		}
 
 		private void SetupPathMovement()
