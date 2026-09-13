@@ -20,3 +20,12 @@ msgstr "Igra Okonchena"
 
 msgid "Press Any Key"
 msgstr "Nazhmite Lyubuyu Knopku"
+
+msgid "Kiss"
+msgstr "Potselovat'"
+
+msgid "Hit"
+msgstr "Udarit'"
+
+msgid "Do Nothing"
+msgstr "Nichego"

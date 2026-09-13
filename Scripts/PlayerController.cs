@@ -22,6 +22,8 @@ namespace PereSkyroom
 		private const float BoostHeatDurationSeconds = 7.0f;
 		private const float NormalCoolingDurationSeconds = 4.0f;
 		private const float OverheatDamage = 40.0f;
+		private const int MaximumFullHealthRestoresPerGame = 2;
+		private const ulong KissHealingCooldownMilliseconds = 2UL * 60UL * 1000UL;
 
 		public float SpeedBoostMovementMultiplier = 3.5f;
 		public float SpeedBoostJumpMultiplier = 1.0f;
@@ -53,6 +55,9 @@ namespace PereSkyroom
 		private float _health = MaximumHealth;
 		private float _temperature;
 		private bool _isDead;
+		private int _fullHealthRestoresRemaining = MaximumFullHealthRestoresPerGame;
+		private bool _kissHealingCooldownActive;
+		private ulong _lastKissHealingMilliseconds;
 
 		public bool WeaponVisible { get { return _weaponVisible; } }
 		public bool SpeedBoostEnabled { get { return _speedBoostEnabled; } }
@@ -490,6 +495,56 @@ namespace PereSkyroom
 			DetachFromHook(false);
 			SetSpeedBoostEnabled(false, false);
 			EmitSignal(nameof(Died));
+		}
+
+		public void RestoreHealth(float amount)
+		{
+			if (amount <= 0.0f || _isDead)
+				return;
+
+			_health = Mathf.Min(MaximumHealth, _health + amount);
+			UpdatePlayerStatsHud();
+		}
+
+		public bool TryRestoreHealthFromKiss(float amount)
+		{
+			if (amount <= 0.0f || _isDead || _health >= MaximumHealth)
+				return false;
+
+			ulong now = OS.GetTicksMsec();
+			if (_kissHealingCooldownActive
+				&& now - _lastKissHealingMilliseconds < KissHealingCooldownMilliseconds)
+			{
+				return false;
+			}
+
+			_health = Mathf.Min(MaximumHealth, _health + amount);
+			_kissHealingCooldownActive = true;
+			_lastKissHealingMilliseconds = now;
+			UpdatePlayerStatsHud();
+			return true;
+		}
+
+		public bool TryRestoreFullHealth()
+		{
+			if (_isDead || _health >= MaximumHealth || _fullHealthRestoresRemaining <= 0)
+				return false;
+
+			_fullHealthRestoresRemaining--;
+			_health = MaximumHealth;
+			UpdatePlayerStatsHud();
+			return true;
+		}
+
+		public void ResetFullHealthRestoreLimit()
+		{
+			_fullHealthRestoresRemaining = MaximumFullHealthRestoresPerGame;
+		}
+
+		public void ResetKissHealingCooldown()
+		{
+			_kissHealingCooldownActive = false;
+			_lastKissHealingMilliseconds = 0UL;
 		}
 
         private void Shoot()

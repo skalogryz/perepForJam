@@ -102,6 +102,8 @@ namespace PereSkyroom
 			BuildPlatforms();
 			List<ShootTarget> targets = BuildTargets();
 			_player = BuildPlayer();
+			_player.ResetFullHealthRestoreLimit();
+			_player.ResetKissHealingCooldown();
 			_weaponHud = GetNode<WeaponHud>("WeaponHUD");
 			_weaponHud.ResetDeathPresentation();
 			_player.SetWeaponHud(_weaponHud);
@@ -253,7 +255,11 @@ namespace PereSkyroom
 				return;
 			}
 
-			ShowDialog(packedUi.Instance());
+			Node dialogUi = packedUi.Instance();
+			IPlayerDialog playerDialog = dialogUi as IPlayerDialog;
+			if (playerDialog != null)
+				playerDialog.SetPlayer(player as PlayerController);
+			ShowDialog(dialogUi);
 		}
 
 		private void ShowDialog(Node dialogUi)
@@ -416,6 +422,8 @@ namespace PereSkyroom
 				_stoneDropManager.ClearStones();
 				_pet.RespawnAtPlayer();
 				_loadedBlendLevelPath = path;
+				_player.ResetFullHealthRestoreLimit();
+				_player.ResetKissHealingCooldown();
 				GD.Print("Loaded .blend level: " + path + " ("
 					+ loaded.MeshObjectCount + " mesh objects, "
 					+ loaded.LightObjectCount + " light objects, "

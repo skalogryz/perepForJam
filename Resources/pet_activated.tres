@@ -4,5 +4,5 @@
 
 [resource]
 script = ExtResource( 1 )
-Name = "xogame"
-UIScene = "res://TicTacToe.tscn"
+Name = "pet_activated"
+UIScene = "res://PetInteractionDialog.tscn"

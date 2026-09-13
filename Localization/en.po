@@ -20,3 +20,12 @@ msgstr "Game Over"
 
 msgid "Press Any Key"
 msgstr "Press Any Key"
+
+msgid "Kiss"
+msgstr "Kiss"
+
+msgid "Hit"
+msgstr "Hit"
+
+msgid "Do Nothing"
+msgstr "Do Nothing"
