@@ -9,6 +9,7 @@ namespace PereSkyroom
 		public PlayerController Player;
 		public float TargetFovDegrees = 270.0f;
 		public float TransitionDurationSeconds = 0.5f;
+		public int ShadowAtlasResolution = 2048;
 
 		private readonly Viewport[] _viewports = new Viewport[3];
 		private readonly Camera[] _cameras = new Camera[3];
@@ -86,7 +87,8 @@ namespace PereSkyroom
 				RenderTargetVFlip = true,
 				RenderTargetUpdateMode = Viewport.UpdateMode.Disabled,
 				HandleInputLocally = false,
-				Hdr = true
+				Hdr = true,
+				ShadowAtlasSize = Mathf.Max(0, ShadowAtlasResolution)
 			};
 			camera = new Camera
 			{
