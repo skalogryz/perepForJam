@@ -28,6 +28,7 @@ namespace PereSkyroom
 		}
 
 		private static readonly Color DefaultMaterialColor = new Color(0.32f, 0.48f, 0.62f, 1.0f);
+		private static readonly Color PuzzleMaterialColor = new Color(0.0f, 1.0f, 0.0f, 1.0f);
 
 		public static LoadedBlendLevel Load(string path)
 		{
@@ -96,6 +97,7 @@ namespace PereSkyroom
 				}
 
 				bool isHook = HasPrefix(blendObject.Name, "кр", "hook");
+				bool isPuzzle = HasPrefix(blendObject.Name, "вых", "puzzle");
 				bool hasCollision = !HasPrefix(blendObject.Name, "дек");
 				var body = new PlatformProps
 				{
@@ -108,7 +110,8 @@ namespace PereSkyroom
 				{
 					Name = "Mesh",
 					Mesh = builtMesh.Mesh,
-					Translation = builtMesh.LocalOffset
+					Translation = builtMesh.LocalOffset,
+					MaterialOverride = isPuzzle ? BuildPuzzleMaterial() : null
 				};
 				body.AddChild(meshInstance);
 				if (hasCollision)
@@ -125,6 +128,8 @@ namespace PereSkyroom
 					};
 					body.AddChild(collision);
 				}
+				if (isPuzzle)
+					AddPuzzleTriggerField(body, builtMesh);
 				root.AddChild(body);
 				int hookNumber;
 				if (isHook && TryFindInteger(blendObject.Name, out hookNumber)
@@ -151,6 +156,40 @@ namespace PereSkyroom
 				MeshObjectCount = meshCount,
 				LightObjectCount = lightCount,
 				PathObjectCount = pathCount
+			};
+		}
+
+		private static void AddPuzzleTriggerField(
+			PlatformProps body,
+			MeshBuildResult builtMesh)
+		{
+			BoxShape sourceBounds = builtMesh.BoundingBoxCollisionShape as BoxShape;
+			if (sourceBounds == null)
+				return;
+
+			var triggerField = new TriggerField
+			{
+				Name = "PuzzleTrigger",
+				EventName = "puzzle_event",
+				ActivateTarget = body
+			};
+			triggerField.AddChild(new CollisionShape
+			{
+				Name = "CollisionShape",
+				Shape = new BoxShape { Extents = sourceBounds.Extents * 2.0f },
+				Translation = builtMesh.BoundingBoxCollisionOffset
+			});
+			body.AddChild(triggerField);
+		}
+
+		private static SpatialMaterial BuildPuzzleMaterial()
+		{
+			return new SpatialMaterial
+			{
+				AlbedoColor = PuzzleMaterialColor,
+				Roughness = 0.78f,
+				Metallic = 0.05f,
+				FlagsUnshaded = true
 			};
 		}
 
