@@ -12,14 +12,14 @@ namespace PereSkyroom
 
 		private Sprite _stateSprite;
 		private ProgressBar _healthBar;
-		private ProgressBar _temperatureBar;
+		private TextureProgress _temperatureBar;
 		private bool _boostEnabled;
 
 		public override void _Ready()
 		{
 			_stateSprite = GetAssignedNode<Sprite>(BoostStateSpritePath, nameof(BoostStateSpritePath));
 			_healthBar = GetAssignedNode<ProgressBar>(HealthBarPath, nameof(HealthBarPath));
-			_temperatureBar = GetAssignedNode<ProgressBar>(
+			_temperatureBar = GetAssignedNode<TextureProgress>(
 				TemperatureBarPath, nameof(TemperatureBarPath));
 			ApplyState();
 		}
