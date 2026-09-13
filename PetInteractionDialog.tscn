@@ -1,13 +1,15 @@
-[gd_scene load_steps=4 format=2]
+[gd_scene load_steps=5 format=2]
 
 [ext_resource path="res://Scripts/PetInteractionDialog.cs" type="Script" id=1]
 [ext_resource path="res://Resources/gameuitheme.tres" type="Theme" id=2]
 [ext_resource path="res://Scripts/ControlTranslationGroup.cs" type="Script" id=3]
 
+[sub_resource type="StyleBoxEmpty" id=1]
+
 [node name="PetInteractionDialog" type="Control"]
+pause_mode = 2
 anchor_right = 1.0
 anchor_bottom = 1.0
-pause_mode = 2
 script = ExtResource( 1 )
 
 [node name="Background" type="ColorRect" parent="."]
@@ -21,24 +23,37 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 
 [node name="Panel" type="PanelContainer" parent="Center"]
+margin_left = 290.0
+margin_top = 145.0
+margin_right = 670.0
+margin_bottom = 395.0
 rect_min_size = Vector2( 380, 250 )
-theme = ExtResource( 2 )
+custom_styles/panel = SubResource( 1 )
 
 [node name="Buttons" type="VBoxContainer" parent="Center/Panel"]
-theme = ExtResource( 2 )
+margin_right = 380.0
+margin_bottom = 250.0
 custom_constants/separation = 18
 
 [node name="KissButton" type="Button" parent="Center/Panel/Buttons"]
+margin_right = 380.0
+margin_bottom = 58.0
 rect_min_size = Vector2( 360, 58 )
 theme = ExtResource( 2 )
 text = "Kiss"
 
 [node name="HitButton" type="Button" parent="Center/Panel/Buttons"]
+margin_top = 76.0
+margin_right = 380.0
+margin_bottom = 134.0
 rect_min_size = Vector2( 360, 58 )
 theme = ExtResource( 2 )
 text = "Hit"
 
 [node name="NothingButton" type="Button" parent="Center/Panel/Buttons"]
+margin_top = 152.0
+margin_right = 380.0
+margin_bottom = 210.0
 rect_min_size = Vector2( 360, 58 )
 theme = ExtResource( 2 )
 text = "Do Nothing"
