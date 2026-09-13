@@ -211,7 +211,6 @@ namespace PereSkyroom
             _velocity.x = wishDirection.x * speed;
             _velocity.z = wishDirection.z * speed;
 
-#if !EXPORT_RELEASE
 			if (_flightMode)
             {
                 float vertical = Input.GetActionStrength("jump_or_up") - Input.GetActionStrength("fly_down");
@@ -229,7 +228,6 @@ namespace PereSkyroom
                     _velocity.y -= Gravity * delta;
                 _velocity = MoveAndSlide(_velocity, Vector3.Up, true, 4, Mathf.Deg2Rad(55.0f));
             }
-#endif
 
 			if (Input.IsActionJustPressed("shoot") && Input.MouseMode == Input.MouseModeEnum.Captured)
                 Shoot();
