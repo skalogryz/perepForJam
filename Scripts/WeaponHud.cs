@@ -4,6 +4,9 @@ namespace PereSkyroom
 {
 	public class WeaponHud : CanvasLayer
 	{
+		[Signal]
+		public delegate void DeathFadeCompleted();
+
 		[Export] public Texture NormalSprite1;
 		[Export] public Texture NormalSprite2;
 		[Export] public Texture BoostSprite1;
@@ -23,11 +26,18 @@ namespace PereSkyroom
 		[Export] public float BobVerticalPixels = 10.0f;
 		[Export] public float BobCyclesPerSecond = 1.7f;
 		[Export] public float ReturnDurationSeconds = 0.2f;
+		[Export] public float DeathFadeDurationSeconds = 0.3f;
+		[Export] public int DeathFadeLayer = 1100;
 
 		private PlayerController _player;
 		private Sprite _sprite1;
 		private Sprite _sprite2;
+		private ColorRect _deathFade;
 		private bool _weaponVisible = true;
+		private bool _deathPresentationActive;
+		private bool _deathFadeRunning;
+		private float _deathFadeElapsed;
+		private int _normalLayer;
 		private bool _wasMoving;
 		private float _bobPhase;
 		private float _movementBlendElapsed;
@@ -48,15 +58,19 @@ namespace PereSkyroom
 
 		public override void _Ready()
 		{
+			_normalLayer = Layer;
 			_sprite1 = GetNode<Sprite>("WeaponSprite1");
 			_sprite2 = GetNode<Sprite>("WeaponSprite2");
+			_deathFade = GetNode<ColorRect>("DeathFade");
 			_returnElapsed = Mathf.Max(ReturnDurationSeconds, 0.001f);
+			ResetDeathPresentation();
 			RefreshSpriteSet();
 			UpdateSpritePositions();
 		}
 
 		public override void _Process(float delta)
 		{
+			UpdateDeathFade(delta);
 			if (_player == null || !IsInstanceValid(_player))
 				return;
 
@@ -84,6 +98,54 @@ namespace PereSkyroom
 		{
 			_weaponVisible = visible;
 			ApplySpriteVisibility();
+		}
+
+		public void BeginDeathFade()
+		{
+			if (_deathPresentationActive)
+				return;
+
+			_deathPresentationActive = true;
+			_deathFadeRunning = true;
+			_deathFadeElapsed = 0.0f;
+			Layer = DeathFadeLayer;
+			if (_deathFade != null)
+			{
+				_deathFade.Visible = true;
+				_deathFade.Color = new Color(0.0f, 0.0f, 0.0f, 0.0f);
+			}
+			ApplySpriteVisibility();
+		}
+
+		public void ResetDeathPresentation()
+		{
+			_deathPresentationActive = false;
+			_deathFadeRunning = false;
+			_deathFadeElapsed = 0.0f;
+			Layer = _normalLayer;
+			if (_deathFade != null)
+			{
+				_deathFade.Visible = false;
+				_deathFade.Color = new Color(0.0f, 0.0f, 0.0f, 0.0f);
+			}
+			ApplySpriteVisibility();
+		}
+
+		private void UpdateDeathFade(float delta)
+		{
+			if (!_deathFadeRunning)
+				return;
+
+			float duration = Mathf.Max(DeathFadeDurationSeconds, 0.001f);
+			_deathFadeElapsed = Mathf.Min(_deathFadeElapsed + delta, duration);
+			if (_deathFade != null)
+				_deathFade.Color = new Color(0.0f, 0.0f, 0.0f, _deathFadeElapsed / duration);
+
+			if (_deathFadeElapsed < duration)
+				return;
+
+			_deathFadeRunning = false;
+			EmitSignal(nameof(DeathFadeCompleted));
 		}
 
 		private void UpdateMovingOffset(float planarSpeed, float delta)
@@ -197,9 +259,9 @@ namespace PereSkyroom
 		private void ApplySpriteVisibility()
 		{
 			if (_sprite1 != null)
-				_sprite1.Visible = _weaponVisible && _sprite1.Texture != null;
+				_sprite1.Visible = !_deathPresentationActive && _weaponVisible && _sprite1.Texture != null;
 			if (_sprite2 != null)
-				_sprite2.Visible = _weaponVisible && _sprite2.Texture != null;
+				_sprite2.Visible = !_deathPresentationActive && _weaponVisible && _sprite2.Texture != null;
 		}
 	}
 }

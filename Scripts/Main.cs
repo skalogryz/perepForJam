@@ -22,6 +22,7 @@ namespace PereSkyroom
 		[Export] public float StoneEvaluationDelaySeconds = 3.0f;
 		[Export] public int MaximumStoneCount = 20;
 		[Export] public PackedScene PetScene;
+		[Export] public PackedScene GameOverScene;
 		[Export] public float PetPlayerReachDistance = 2.0f;
 		[Export] public float PetStoneSearchDistance = 3.0f;
 		[Export] public float PetSideLength = 0.5f;
@@ -87,6 +88,7 @@ namespace PereSkyroom
 		private PauseModeEnum _dialogueHudPauseModeBeforeDialog;
 		private readonly Dictionary<Node, PauseModeEnum> _childPauseModesBeforeDialog
 			= new Dictionary<Node, PauseModeEnum>();
+		private bool _gameOverStarted;
 
 		public override void _Ready()
 		{
@@ -100,7 +102,11 @@ namespace PereSkyroom
 			List<ShootTarget> targets = BuildTargets();
 			_player = BuildPlayer();
 			_weaponHud = GetNode<WeaponHud>("WeaponHUD");
+			_weaponHud.ResetDeathPresentation();
 			_player.SetWeaponHud(_weaponHud);
+			_player.Connect(nameof(PlayerController.Died), this, nameof(OnPlayerDied));
+			_weaponHud.Connect(
+				nameof(WeaponHud.DeathFadeCompleted), this, nameof(OnDeathFadeCompleted));
 			RegisterPlayerWithPlatforms(_levelRoot, _player);
 			_stoneDropManager = BuildStoneDropManager(_player);
 			_pet = BuildPet(_player, _stoneDropManager);
@@ -162,6 +168,8 @@ namespace PereSkyroom
 			var key = inputEvent as InputEventKey;
 			if (key == null || !key.Pressed || key.Echo)
 				return;
+			if (_gameOverStarted)
+				return;
 			if (key.Scancode == (uint)KeyList.Escape && IsDialogActive())
 			{
 				CloseDialog();
@@ -185,6 +193,12 @@ namespace PereSkyroom
 		private void SetupDialogueHud()
 		{
 			_dialogueHud = GetNode<CanvasLayer>("DialogueHUD");
+			foreach (Node child in _dialogueHud.GetChildren())
+			{
+				_dialogueHud.RemoveChild(child);
+				child.QueueFree();
+			}
+			_activeDialogUi = null;
 			GlobalSettings settings = GlobalSettings.inst;
 			if (settings == null || !IsInstanceValid(settings))
 			{
@@ -271,6 +285,30 @@ namespace PereSkyroom
 		private void OnDialogCloseRequested()
 		{
 			CloseDialog();
+		}
+
+		private void OnPlayerDied()
+		{
+			if (_gameOverStarted)
+				return;
+
+			_gameOverStarted = true;
+			if (IsDialogActive())
+				CloseDialog();
+			_weaponHud.BeginDeathFade();
+		}
+
+		private void OnDeathFadeCompleted()
+		{
+			if (!_gameOverStarted)
+				return;
+			if (GameOverScene == null)
+			{
+				GD.PushError("GameOverScene is not assigned in Main.tscn.");
+				return;
+			}
+
+			ShowDialog(GameOverScene.Instance());
 		}
 
 		private void CloseDialog()

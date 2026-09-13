@@ -14,3 +14,9 @@ msgstr "Nachat' Igru"
 
 msgid "Language"
 msgstr "Yazik"
+
+msgid "Game Over"
+msgstr "Igra Okonchena"
+
+msgid "Press Any Key"
+msgstr "Nazhmite Lyubuyu Knopku"

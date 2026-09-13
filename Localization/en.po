@@ -14,3 +14,9 @@ msgstr "Start Game"
 
 msgid "Language"
 msgstr "Language"
+
+msgid "Game Over"
+msgstr "Game Over"
+
+msgid "Press Any Key"
+msgstr "Press Any Key"

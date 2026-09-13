@@ -2,8 +2,11 @@ using Godot;
 
 namespace PereSkyroom
 {
-    public class PlayerController : KinematicBody
-    {
+	public class PlayerController : KinematicBody
+	{
+		[Signal]
+		public delegate void Died();
+
 		public const uint WorldCollisionLayer = 1u << 0;
 		public const uint PlayerTriggerLayer = 1u << 1;
 		public const uint SceneCameraCullMask = uint.MaxValue;
@@ -48,11 +51,13 @@ namespace PereSkyroom
 		private bool _weaponVisible = true;
 		private float _health = MaximumHealth;
 		private float _temperature;
+		private bool _isDead;
 
 		public bool WeaponVisible { get { return _weaponVisible; } }
 		public bool SpeedBoostEnabled { get { return _speedBoostEnabled; } }
 		public float Health { get { return _health; } }
 		public float Temperature { get { return _temperature; } }
+		public bool IsDead { get { return _isDead; } }
 		public float PlanarMovementSpeed { get { return new Vector2(_velocity.x, _velocity.z).Length(); } }
 		public float NormalWalkSpeed { get { return WalkSpeed; } }
 		public bool HudLabelsVisible { get { return _hud != null && _hud.Visible; } }
@@ -81,8 +86,11 @@ namespace PereSkyroom
 			UpdatePlayerStatsHud();
         }
 
-        public override void _UnhandledInput(InputEvent inputEvent)
-        {
+		public override void _UnhandledInput(InputEvent inputEvent)
+		{
+			if (_isDead)
+				return;
+
             var mouseMotion = inputEvent as InputEventMouseMotion;
             if (mouseMotion != null && Input.MouseMode == Input.MouseModeEnum.Captured)
             {
@@ -119,8 +127,14 @@ namespace PereSkyroom
             }
         }
 
-        public override void _PhysicsProcess(float delta)
-        {
+		public override void _PhysicsProcess(float delta)
+		{
+			if (_isDead)
+			{
+				_velocity = Vector3.Zero;
+				return;
+			}
+
 			if (Input.IsActionJustPressed("reset_level"))
 			{
 				Main main = GetParent() as Main;
@@ -453,12 +467,21 @@ namespace PereSkyroom
 
 		public void ApplyDamage(float damage)
 		{
-			if (damage <= 0.0f)
+			if (damage <= 0.0f || _isDead)
 				return;
 			_health = Mathf.Max(0.0f, _health - damage);
 			if (_ditherPostProcess != null && IsInstanceValid(_ditherPostProcess))
 				_ditherPostProcess.PlayDamagePaletteFlash();
 			UpdatePlayerStatsHud();
+
+			if (_health > 0.0f)
+				return;
+
+			_isDead = true;
+			_velocity = Vector3.Zero;
+			DetachFromHook(false);
+			SetSpeedBoostEnabled(false, false);
+			EmitSignal(nameof(Died));
 		}
 
         private void Shoot()
