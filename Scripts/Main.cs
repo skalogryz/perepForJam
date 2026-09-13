@@ -112,6 +112,7 @@ namespace PereSkyroom
 			_pet = BuildPet(_player, _stoneDropManager);
 			_sideCameraMode = BuildSideCameraMode(_player);
 			_panoramicFovMode = BuildPanoramicFovMode(_player);
+			_player.SetPanoramicFovMode(_panoramicFovMode);
 			_dither = BuildDitherPostProcess(_player);
 			_accentDither = BuildAccentObjectDither(
 				targets, _player, _sideCameraMode, _panoramicFovMode, _dither);

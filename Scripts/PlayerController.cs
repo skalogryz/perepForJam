@@ -30,6 +30,7 @@ namespace PereSkyroom
 		private Camera _camera;
 		private WeaponHud _weaponHud;
 		private BlueNoiseDither _ditherPostProcess;
+		private PanoramicFovMode _panoramicFovMode;
 		private CanvasLayer _hud;
         private Label _modeLabel;
         private Label _scoreLabel;
@@ -278,6 +279,11 @@ namespace PereSkyroom
 			_ditherPostProcess = ditherPostProcess;
 		}
 
+		public void SetPanoramicFovMode(PanoramicFovMode panoramicFovMode)
+		{
+			_panoramicFovMode = panoramicFovMode;
+		}
+
 		public void SetWeaponVisible(bool visible, bool showMessage = false)
 		{
 			_weaponVisible = visible;
@@ -436,6 +442,8 @@ namespace PereSkyroom
 				return;
 
 			_speedBoostEnabled = enabled;
+			if (_panoramicFovMode != null && IsInstanceValid(_panoramicFovMode))
+				_panoramicFovMode.SetEnabled(_speedBoostEnabled, false);
 			GlobalSettings.SetBoostMode(_speedBoostEnabled);
 			UpdatePlayerStatsHud();
 			if (showMessage)
