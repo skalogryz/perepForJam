@@ -8,7 +8,7 @@
     <DefineConstants>TRACE;DEBUG;GODOT;GODOT_WINDOWS;GODOT_PC;GODOT_EXPORT</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ExportRelease|AnyCPU'">
-    <DefineConstants>TRACE;GODOT;GODOT_WINDOWS;GODOT_PC;GODOT_EXPORT</DefineConstants>
+    <DefineConstants>TRACE;GODOT;GODOT_WINDOWS;GODOT_PC;GODOT_EXPORT;EXPORT_RELEASE</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\BlenderReader\BlenderReader.csproj" />

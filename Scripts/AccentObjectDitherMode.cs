@@ -90,7 +90,11 @@ void fragment() {
 
 			if (Input.IsActionJustPressed("toggle_accent_object_dither")
 				&& Dither != null && IsInstanceValid(Dither) && Dither.Enabled)
+			{
+				#if (!EXPORT_RELEASE)
 				SetEnabled(!Enabled);
+				#endif
+			}
 			if (!Enabled)
 				return;
 

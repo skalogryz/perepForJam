@@ -223,8 +223,11 @@ namespace PereSkyroom
 			}
 			if (Input.IsActionJustPressed("toggle_platform_outlines"))
 			{
+
+#if !EXPOR_RELEASE
 				SetPlatformOutlinesEnabled(!_platformOutlinesEnabled, true);
 				GetTree().SetInputAsHandled();
+#endif
 				return;
 			}
 			if (key.Scancode == (uint)KeyList.Escape && IsDialogActive())

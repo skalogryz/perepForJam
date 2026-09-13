@@ -45,7 +45,12 @@ namespace PereSkyroom
 		public override void _Process(float delta)
 		{
 			if (Input.IsActionJustPressed("toggle_accent_wireframe"))
+			{
+
+				#if (!EXPORT_RELEASE)
 				SetEnabled(!Enabled);
+				#endif
+			}
 
 			bool accentDitherActive = AccentDitherMode != null && AccentDitherMode.Enabled;
 			bool shouldDraw = Enabled

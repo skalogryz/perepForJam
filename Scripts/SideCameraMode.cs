@@ -36,7 +36,13 @@ namespace PereSkyroom
 		public override void _Process(float delta)
 		{
 			if (Input.IsActionJustPressed("toggle_side_cameras"))
+			{
+#if !EXPORT_RELEASE
 				SetEnabled(!_enabled);
+
+#endif
+
+			}
 
 			if (!_enabled || Player == null || !IsInstanceValid(Player))
 				return;

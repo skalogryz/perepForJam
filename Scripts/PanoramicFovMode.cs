@@ -33,7 +33,11 @@ namespace PereSkyroom
 		public override void _Process(float delta)
 		{
 			if (Input.IsActionJustPressed("toggle_panoramic_fov"))
+			{
+#if !EXPORT_RELEASE
 				SetEnabled(!_targetEnabled);
+#endif
+			}
 
 			float duration = Mathf.Max(TransitionDurationSeconds, 0.001f);
 			float destination = _targetEnabled ? 1.0f : 0.0f;

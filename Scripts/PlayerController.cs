@@ -141,6 +141,7 @@ namespace PereSkyroom
 				return;
 			}
 
+#if !EXPORT_RELEASE
 			if (Input.IsActionJustPressed("reset_level"))
 			{
 				Main main = GetParent() as Main;
@@ -150,6 +151,7 @@ namespace PereSkyroom
 					GetTree().ReloadCurrentScene();
 				return;
 			}
+#endif
 
 			if (Input.IsActionJustPressed("toggle_speed_boost"))
 				SetSpeedBoostEnabled(!_speedBoostEnabled, true);
@@ -161,17 +163,22 @@ namespace PereSkyroom
 				GlobalSettings.ActivateTarget(GetLookedAtSpatial(), this);
 			}
 
-            if (Input.IsActionJustPressed("toggle_flight"))
+			if (Input.IsActionJustPressed("toggle_flight"))
             {
-                _flightMode = !_flightMode;
+#if !EXPORT_RELEASE
+				_flightMode = !_flightMode;
                 _velocity = Vector3.Zero;
                 UpdateHud();
                 ShowMessage(_flightMode ? "FLIGHT ENABLED" : "FLIGHT DISABLED");
-            }
+#endif
+			}
 
+#if !EXPORT_RELEASE
 			if (Input.IsActionJustPressed("toggle_weapon_visibility"))
 				SetWeaponVisible(!WeaponVisible, true);
+#endif
 
+#if !EXPORT_RELEASE
 			if (Input.IsActionJustPressed("toggle_hud_labels"))
 			{
 				#if GODOT_EXPORT
@@ -180,6 +187,7 @@ namespace PereSkyroom
 				SetHudLabelsVisible(!HudLabelsVisible);
 				#endif
 			}
+#endif
 
 			if (IsOnHook)
 			{
@@ -203,7 +211,8 @@ namespace PereSkyroom
             _velocity.x = wishDirection.x * speed;
             _velocity.z = wishDirection.z * speed;
 
-            if (_flightMode)
+#if !EXPORT_RELEASE
+			if (_flightMode)
             {
                 float vertical = Input.GetActionStrength("jump_or_up") - Input.GetActionStrength("fly_down");
 				_velocity.y = vertical * FlySpeed * speedMultiplier;
@@ -220,8 +229,9 @@ namespace PereSkyroom
                     _velocity.y -= Gravity * delta;
                 _velocity = MoveAndSlide(_velocity, Vector3.Up, true, 4, Mathf.Deg2Rad(55.0f));
             }
+#endif
 
-            if (Input.IsActionJustPressed("shoot") && Input.MouseMode == Input.MouseModeEnum.Captured)
+			if (Input.IsActionJustPressed("shoot") && Input.MouseMode == Input.MouseModeEnum.Captured)
                 Shoot();
 
             if (Translation.y < -15.0f)

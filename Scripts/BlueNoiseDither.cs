@@ -96,9 +96,19 @@ void fragment() {
 		{
 			UpdateDamagePaletteFlash(delta);
 			if (Input.IsActionJustPressed("toggle_dither"))
+			{
+				// D
+				#if !EXPORT_RELEASE
 				SetEnabled(!_enabled);
+				#endif
+			}
 			if (Input.IsActionJustPressed("toggle_dither_palette"))
+			{
+				// I
+#if !EXPORT_RELEASE
 				SetPaletteInverted(!_paletteInverted);
+#endif
+			}
 		}
 
 		public void SetEnabled(bool enabled, bool notifyPlayer = true)
