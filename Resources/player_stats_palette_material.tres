@@ -4,3 +4,10 @@
 
 [resource]
 shader = ExtResource( 1 )
+shader_param/dark_color = Color( 0.0352941, 0.0431373, 0.0745098, 1 )
+shader_param/light_color = Color( 0.854902, 0.909804, 0.901961, 1 )
+shader_param/accent_color = Color( 0.682353, 1, 0, 1 )
+shader_param/black_threshold = 0.86
+shader_param/accent_green_minimum = 0.5
+shader_param/accent_green_dominance = 0.12
+shader_param/alpha_threshold = 0.5
