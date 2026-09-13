@@ -6,6 +6,9 @@ namespace PereSkyroom
 	{
 		[Export] public Texture NormalSprite;
 		[Export] public Texture BoostSprite;
+		[Export] public NodePath BoostStateSpritePath;
+		[Export] public NodePath HealthBarPath;
+		[Export] public NodePath TemperatureBarPath;
 
 		private Sprite _stateSprite;
 		private ProgressBar _healthBar;
@@ -14,10 +17,26 @@ namespace PereSkyroom
 
 		public override void _Ready()
 		{
-			_stateSprite = GetNode<Sprite>("StatsPanel/BoostStateSprite");
-			_healthBar = GetNode<ProgressBar>("StatsPanel/HealthBar");
-			_temperatureBar = GetNode<ProgressBar>("StatsPanel/TemperatureBar");
+			_stateSprite = GetAssignedNode<Sprite>(BoostStateSpritePath, nameof(BoostStateSpritePath));
+			_healthBar = GetAssignedNode<ProgressBar>(HealthBarPath, nameof(HealthBarPath));
+			_temperatureBar = GetAssignedNode<ProgressBar>(
+				TemperatureBarPath, nameof(TemperatureBarPath));
 			ApplyState();
+		}
+
+		private T GetAssignedNode<T>(NodePath path, string propertyName) where T : Node
+		{
+			if (path == null || path.IsEmpty())
+			{
+				GD.PushError("PlayerStatsHud." + propertyName + " is not assigned in the editor.");
+				return null;
+			}
+
+			T node = GetNodeOrNull(path) as T;
+			if (node == null)
+				GD.PushError("PlayerStatsHud." + propertyName
+					+ " does not reference a " + typeof(T).Name + ".");
+			return node;
 		}
 
 		public void SetBoostEnabled(bool enabled)

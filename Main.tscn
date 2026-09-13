@@ -198,27 +198,37 @@ layer = 1200
 script = ExtResource( 9 )
 NormalSprite = ExtResource( 11 )
 BoostSprite = ExtResource( 12 )
+BoostStateSpritePath = NodePath("BoostPanel/BoostStateSprite")
+HealthBarPath = NodePath("VitalsPanel/HealthBar")
+TemperatureBarPath = NodePath("VitalsPanel/TemperatureBar")
 
-[node name="StatsPanel" type="ColorRect" parent="PlayerStatsHUD"]
+[node name="BoostPanel" type="ColorRect" parent="PlayerStatsHUD"]
 anchor_left = 1.0
 anchor_right = 1.0
 margin_left = -173.0
 margin_top = 116.0
 margin_right = -23.0
-margin_bottom = 198.0
+margin_bottom = 160.0
 mouse_filter = 2
 color = Color( 0.0235294, 0.0352941, 0.0588235, 0 )
 
-[node name="BoostStateSprite" type="Sprite" parent="PlayerStatsHUD/StatsPanel"]
+[node name="BoostStateSprite" type="Sprite" parent="PlayerStatsHUD/BoostPanel"]
 material = ExtResource( 13 )
 position = Vector2( 75, 22 )
 scale = Vector2( 0.5, 0.5 )
 texture = ExtResource( 11 )
 
-[node name="HealthBar" type="ProgressBar" parent="PlayerStatsHUD/StatsPanel"]
-margin_top = 48.0
+[node name="VitalsPanel" type="ColorRect" parent="PlayerStatsHUD"]
+margin_left = 26.0
+margin_top = 58.0
+margin_right = 176.0
+margin_bottom = 92.0
+mouse_filter = 2
+color = Color( 0.0235294, 0.0352941, 0.0588235, 0 )
+
+[node name="HealthBar" type="ProgressBar" parent="PlayerStatsHUD/VitalsPanel"]
 margin_right = 150.0
-margin_bottom = 61.0
+margin_bottom = 13.0
 mouse_filter = 2
 custom_styles/fg = SubResource( 2 )
 custom_styles/bg = SubResource( 1 )
@@ -226,10 +236,10 @@ max_value = 120.0
 value = 120.0
 percent_visible = false
 
-[node name="TemperatureBar" type="ProgressBar" parent="PlayerStatsHUD/StatsPanel"]
-margin_top = 67.0
+[node name="TemperatureBar" type="ProgressBar" parent="PlayerStatsHUD/VitalsPanel"]
+margin_top = 19.0
 margin_right = 150.0
-margin_bottom = 80.0
+margin_bottom = 32.0
 mouse_filter = 2
 custom_styles/fg = SubResource( 3 )
 custom_styles/bg = SubResource( 1 )
